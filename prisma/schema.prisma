@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  //output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Machine {
+  id               String              @id @default(cuid())
+  name             String
+  type             MachineType
+  section          String
+  unit             String
+  templates        ChecklistTemplate[]
+  DailyMaintenance DailyMaintenance[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now())
+}
+
+enum MachineType {
+  BUBUT
+  FRAIS
+}
+
+model ChecklistTemplate {
+  id          Int         @id @default(autoincrement())
+  machineType MachineType
+  question    String
+  order       Int
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now())
+  Machine     Machine?    @relation(fields: [machineId], references: [id])
+  machineId   String?
+}
+
+model DailyMaintenance {
+  id        Int                 @id @default(autoincrement())
+  date      DateTime            @default(now())
+  machine   Machine             @relation(fields: [machineId], references: [id])
+  machineId String
+  studentId String
+  responses ChecklistResponse[]
+}
+
+model ChecklistResponse {
+  id                 Int              @id @default(autoincrement())
+  dailyMaintenance   DailyMaintenance @relation(fields: [dailyMaintenanceId], references: [id])
+  dailyMaintenanceId Int
+  question           String
+  answer             String
+}
