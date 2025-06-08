@@ -1,17 +1,19 @@
 import { Router } from "express";
 import {
   createDailyMaintenance,
-  getDailyMaintenances,
+  getMonthlyMaintenances,
   getMonthlySummary,
   getMonthlySummaryByMachine,
   getMonthlySummaryBySection,
   getMonthlySummaryByUnit,
-} from "../controllers/maintenanceControllers";
+  getAllDailyMaintenances
+} from "../controllers/maintenance";
 
 const router = Router();
 
 router.post("/", createDailyMaintenance);
-router.get("/", getDailyMaintenances);
+router.get("/", getAllDailyMaintenances)
+router.get("/monthly", getMonthlyMaintenances);
 router.get("/summary", getMonthlySummary);
 router.get("/summary/machine/:machineId", getMonthlySummaryByMachine);
 router.get("/summary/section/:section", getMonthlySummaryBySection);
