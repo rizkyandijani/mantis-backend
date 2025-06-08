@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dailyMaintenanceRoutes from "./routes/dailyMaintenanceRoutes";
+import maintenanceRoutes from "./routes/maintenanceRoutes";
 import machineRoutes from "./routes/machineRoutes";
 import checklistRoutes from "./routes/checklistRoutes";
 
@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/maintenance", dailyMaintenanceRoutes);
+app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/machine", machineRoutes);
 app.use("/api/checklistTemplate", checklistRoutes);
 

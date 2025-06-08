@@ -30,9 +30,20 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
 };
 
 // ✅ 2. Get All Daily Maintenances
-export const getDailyMaintenances = async (_req: Request, res: Response) => {
+export const getDailyMaintenances = async (req: Request, res: Response) => {
+  const { month, year } = req.query;
+  console.log("cek request", req)
+  console.log("cek month and year", month, year)
+  console.log("cek req.params", req.query)
   try {
+    const monthNumber = month ? parseInt(month as string) : 0; // Ensure month is a number
     const records = await prisma.dailyMaintenance.findMany({
+      where: {
+        date: {
+          gte: new Date(`${year}-${monthNumber > 0 ? monthNumber : '01'}-01`),
+          lt: new Date(`${year}-${monthNumber + 1}-01`)
+        }
+      },
       include: { machine: true, responses: true },
       orderBy: { date: 'desc' }
     });
@@ -53,7 +64,7 @@ try {
         where: {
             date: {
                 gte: new Date(`${year}-${monthNumber > 0 ? monthNumber : '01'}-01`), // Ensure month is defined
-                lt: new Date(`${year}-${+monthNumber + 1}-01`)
+                lt: new Date(`${year}-${monthNumber + 1}-01`)
             }
         },
         _count: true,
@@ -69,18 +80,18 @@ try {
 // ✅ 4. Get Monthly Summary By Machine
 export const getMonthlySummaryByMachine = async (req: Request, res: Response) => {
   const { month, year } = req.query;
-
+  const { machineId } = req.params 
   try {
     const monthNumber = month ? parseInt(month as string) : 0;
-    const result = await prisma.dailyMaintenance.groupBy({
-      by: ['machineId'],
+    const result = await prisma.dailyMaintenance.findMany({
       where: {
+        machineId: machineId,
         date: {
           gte: new Date(`${year}-${monthNumber > 0 ? monthNumber : '01'}-01`),
-          lt: new Date(`${year}-${+monthNumber + 1}-01`)
+          lt: new Date(`${year}-${monthNumber + 1}-01`)
         }
       },
-      _count: true
+      include: { machine: true }
     });
 
     res.json(result);
@@ -92,27 +103,24 @@ export const getMonthlySummaryByMachine = async (req: Request, res: Response) =>
 // ✅ 5. Get Monthly Summary By Section
 export const getMonthlySummaryBySection = async (req: Request, res: Response) => {
   const { month, year } = req.query;
+  const { section } = req.params
 
   try {
     const monthNumber = month ? parseInt(month as string) : 0;
     const result = await prisma.dailyMaintenance.findMany({
       where: {
+        machine: {
+          section: section
+        },
         date: {
           gte: new Date(`${year}-${monthNumber > 0 ? monthNumber : '01'}-01`),
-          lt: new Date(`${year}-${+monthNumber + 1}-01`)
+          lt: new Date(`${year}-${monthNumber + 1}-01`)
         }
       },
       include: { machine: true }
     });
 
-    const summary: { [section: string]: number } = {};
-
-    result.forEach(record => {
-      const section = record.machine.section;
-      summary[section] = (summary[section] || 0) + 1;
-    });
-
-    res.json(summary);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to summarize by section' });
   }
@@ -121,27 +129,24 @@ export const getMonthlySummaryBySection = async (req: Request, res: Response) =>
 // ✅ 6. Get Monthly Summary By Unit
 export const getMonthlySummaryByUnit = async (req: Request, res: Response) => {
   const { month, year } = req.query;
+  const { unit } = req.params
 
   try {
     const monthNumber = month ? parseInt(month as string) : 0;
     const result = await prisma.dailyMaintenance.findMany({
       where: {
+        machine: {
+          unit: unit
+        },
         date: {
           gte: new Date(`${year}-${monthNumber > 0 ? monthNumber : '01'}-01`),
-          lt: new Date(`${year}-${+monthNumber + 1}-01`)
+          lt: new Date(`${year}-${monthNumber + 1}-01`)
         }
       },
       include: { machine: true }
     });
 
-    const summary: { [unit: string]: number } = {};
-
-    result.forEach(record => {
-      const unit = record.machine.unit;
-      summary[unit] = (summary[unit] || 0) + 1;
-    });
-
-    res.json(summary);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to summarize by unit' });
   }

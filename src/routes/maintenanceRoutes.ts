@@ -6,7 +6,7 @@ import {
   getMonthlySummaryByMachine,
   getMonthlySummaryBySection,
   getMonthlySummaryByUnit,
-} from "../controllers/dailyMaintenanceControllers";
+} from "../controllers/maintenanceControllers";
 
 const router = Router();
 
