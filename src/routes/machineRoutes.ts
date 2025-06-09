@@ -4,15 +4,17 @@ import {
   getMachineById,
   createMachine,
   updateMachine,
-  deleteMachine
+  deleteMachine,
+  getMachineByType
 } from '../controllers/machine';
 
 const router = Router();
 
 router.get('/', getAllMachines);             // GET /machines
-router.get('/:id', getMachineById);          // GET /machines/:id
+router.get('/:machineId', getMachineById);          // GET /machines/:id
+router.get('/type/:machineType', getMachineByType); // GET /machines/type/:machineType
 router.post('/', createMachine);             // POST /machines
-router.put('/:id', updateMachine);           // PUT /machines/:id
-router.delete('/:id', deleteMachine);        // DELETE /machines/:id
+router.put('/:machineId', updateMachine);           // PUT /machines/:id
+router.delete('/:machineId', deleteMachine);        // DELETE /machines/:id
 
 export default router;

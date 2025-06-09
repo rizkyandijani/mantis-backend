@@ -3,9 +3,9 @@ import cors from "cors";
 import maintenanceRoutes from "./routes/maintenanceRoutes";
 import machineRoutes from "./routes/machineRoutes";
 import checklistRoutes from "./routes/checklistRoutes";
+import userRoutes from "./routes/userRoutes";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -13,11 +13,10 @@ app.use(express.json());
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/machine", machineRoutes);
 app.use("/api/checklistTemplate", checklistRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("MANTIS API is running");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+export default app

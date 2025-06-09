@@ -59,3 +59,19 @@ model ChecklistResponse {
   question           String
   answer             String
 }
+
+enum Role {
+   admin
+   student
+   instructor
+ }
+
+ model User {
+   id         String   @id @default(uuid())
+   email      String   @unique
+   password   String
+   name       String?
+   role       Role     @default(student)
+   createdAt  DateTime @default(now())
+   updatedAt  DateTime @updatedAt
+ }

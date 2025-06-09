@@ -9,7 +9,7 @@ export const getAllMachines = async (_req: Request, res: Response) => {
     const machines = await prisma.machine.findMany();
     res.json(machines);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch machines' });
+    res.status(500).json({ error: 'Failed to fetch machines', detail: error });
   }
 };
 
@@ -22,7 +22,7 @@ export const getMachineByType = async (req: Request, res: Response) => {
     });
     res.json(machine);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch machine by type' });
+    res.status(500).json({ error: 'Failed to fetch machine by type', detail: error });
   }
 };
 
@@ -34,12 +34,12 @@ export const getMachineById = async (req: Request, res: Response) => {
       });
       res.json(machine);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch machine by id' });
+      res.status(500).json({ error: 'Failed to fetch machine by id', detail: error });
     }
   };
 
 export const createMachine = async (req: Request, res: Response) => {
-  const { name, type, section, unit  } = req.params;
+  const { name, type, section, unit  } = req.body;
   try {
     const machine = await prisma.machine.create({
         data: {
@@ -49,26 +49,27 @@ export const createMachine = async (req: Request, res: Response) => {
             unit: unit
         },
     });
-    res.json(machine);
+    res.status(201).json(machine);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create machine' });
+    res.status(500).json({ error: `Failed to create machine`, detail: error });
   }
 };
 
 export const deleteMachine = async (req: Request, res: Response) => {
   const { machineId } = req.params;
   try {
-    const machine = await prisma.machine.delete({
+    const deletedMachine = await prisma.machine.delete({
       where: { id: machineId }
     });
-    res.json(machine);
+    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete machine' });
+    res.status(500).json({ error: 'Failed to delete machine', detail: error });
   }
 };
 
 export const updateMachine = async (req: Request, res: Response) => {
-  const { machineId, name, type, section, unit } = req.params;
+  const {machineId} = req.params
+  const { name, type, section, unit } = req.body;
   try {
     const machine = await prisma.machine.update({
       where: { id: machineId },
@@ -81,6 +82,6 @@ export const updateMachine = async (req: Request, res: Response) => {
     });
     res.json(machine);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update machine' });
+    res.status(500).json({ error: 'Failed to update machine', detail: error });
   }
 };
