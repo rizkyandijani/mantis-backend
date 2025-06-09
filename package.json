@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/listener.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/listener.js",
     "prisma": "prisma",
     "seed": "ts-node prisma/seed.ts",
     "test": "jest --detectOpenHandles --forceExit"
