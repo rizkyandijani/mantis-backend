@@ -8,15 +8,17 @@ import {
   getMonthlySummaryByUnit,
   getAllDailyMaintenances
 } from "../controllers/maintenance";
+import { get } from "http";
 
-const router = Router();
+const protectedMaintenanceRouter = Router();
 
-router.post("/", createDailyMaintenance);
-router.get("/", getAllDailyMaintenances)
-router.get("/monthly", getMonthlyMaintenances);
-router.get("/summary", getMonthlySummary);
-router.get("/summary/machine/:machineId", getMonthlySummaryByMachine);
-router.get("/summary/section/:section", getMonthlySummaryBySection);
-router.get("/summary/unit/:unit", getMonthlySummaryByUnit);
+export const postDailyMaintenance = createDailyMaintenance;
+export const allDailyMaintenances = getAllDailyMaintenances;
+export const monthlyMaintenances = getMonthlyMaintenances;
+export const summaryMaintenance = getMonthlySummary;
 
-export default router;
+protectedMaintenanceRouter.get("/summary/machine/:machineId", getMonthlySummaryByMachine);
+protectedMaintenanceRouter.get("/summary/section/:section", getMonthlySummaryBySection);
+protectedMaintenanceRouter.get("/summary/unit/:unit", getMonthlySummaryByUnit);
+
+export {protectedMaintenanceRouter};

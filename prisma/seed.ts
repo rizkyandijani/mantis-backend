@@ -1,12 +1,15 @@
-import { PrismaClient, MachineType } from '@prisma/client';
+import { PrismaClient, MachineType, Role } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { startOfDay } from 'date-fns';
 
 const prisma = new PrismaClient();
 
 async function main() {
     // Seed mesin
-    await prisma.checklistResponse.deleteMany(); // Hapus dulu respon checklist
+    await prisma.questionResponse.deleteMany(); // Hapus dulu respon checklist
     await prisma.dailyMaintenance.deleteMany();  // Baru hapus daily maintenance
-    await prisma.checklistTemplate.deleteMany(); // Lalu hapus checklist template
+    await prisma.questionTemplate.deleteMany(); // Lalu hapus checklist template
+    await prisma.user.deleteMany(); // Hapus semua user
     await prisma.machine.deleteMany();           // Sekarang aman hapus mesin
     await prisma.machine.createMany({
         data: [
@@ -18,24 +21,34 @@ async function main() {
     });
 
     // Seed checklist questions
-    await prisma.checklistTemplate.createMany({
+    await prisma.questionTemplate.createMany({
         data: [
         // Untuk mesin BUBUT
-        { machineType: 'BUBUT', order: 1,question: 'Apakah sistem pendingin berfungsi dengan baik?' },
-        { machineType: 'BUBUT', order: 2,question: 'Apakah ada kebocoran oli?' },
-        { machineType: 'BUBUT', order: 3,question: 'Apakah rel gerak sudah dibersihkan?' },
+        { machineType: 'BUBUT', order: 1, question: 'Apakah sistem pendingin berfungsi dengan baik?' },
+        { machineType: 'BUBUT', order: 2, question: 'Apakah ada kebocoran oli?' },
+        { machineType: 'BUBUT', order: 3, question: 'Apakah rel gerak sudah dibersihkan?' },
 
         // Untuk mesin FRAIS
-        { machineType: 'FRAIS', order: 1,question: 'Apakah spindle berjalan lancar?' },
-        { machineType: 'FRAIS', order: 2,question: 'Apakah sistem pelumasan cukup?' },
-        { machineType: 'FRAIS', order: 3,question: 'Apakah meja kerja bersih dari serpihan?' },
+        { machineType: 'FRAIS', order: 1, question: 'Apakah spindle berjalan lancar?' },
+        { machineType: 'FRAIS', order: 2, question: 'Apakah sistem pelumasan cukup?' },
+        { machineType: 'FRAIS', order: 3, question: 'Apakah meja kerja bersih dari serpihan?' },
         ],
     });
+    const hashedPassword = async (pass: string) => await bcrypt.hash(pass, 10);
+    await prisma.user.createMany({
+        data: [
+        { name: 'Student 1', role: Role.student, email: 'student1wbs@mail.com', password: await hashedPassword('student123') },
+        { name: 'Student 2', role: Role.student, email: 'student2wbs@mail.com', password: await hashedPassword('student123') },
+        { name: 'Student 3', role: Role.student, email: 'student3wbs@mail.com', password: await hashedPassword('student123') },
+        { name: 'Instructor 1', role: Role.instructor, email: 'instructur1wbs@mail.com', password: await hashedPassword('instructor123') },
+        { name: 'Admin 1', role: Role.admin, email: 'adminmantis1@mail.com', password: await hashedPassword('admin123') }
+        ]
+    }) 
 
     // 4. Seed Daily Maintenance + Checklist Responses
     // Generate daily maintenance for 3 months for each machine
     const months = ['2025-04', '2025-05', '2025-06'];
-    const studentIds = ['S001', 'S002', 'S003'];
+    const studentEmails = ['student1wbs@mail.com', 'student2wbs@mail.com', 'student3wbs@mail.com'];
     const machines = [
     { id: 'B1', type: 'BUBUT' },
     { id: 'B2', type: 'BUBUT' },
@@ -46,8 +59,8 @@ async function main() {
     for (const month of months) {
     for (let day = 1; day <= 30; day++) {
         for (const [index, machine] of machines.entries()) {
-        const date = new Date(`${month}-${String(day).padStart(2, '0')}`);
-        const questions = await prisma.checklistTemplate.findMany({
+        const date = startOfDay(new Date(`${month}-${String(day).padStart(2, '0')}`));
+        const questions = await prisma.questionTemplate.findMany({
             where: { machineType: machine.type as MachineType },
             orderBy: { order: 'asc' }
         });
@@ -55,12 +68,12 @@ async function main() {
         await prisma.dailyMaintenance.create({
             data: {
                 machineId: machine.id,
-                studentId: studentIds[index % studentIds.length],
-                date,
+                studentEmail: studentEmails[index % studentEmails.length],
+                dateOnly: date,
                 responses: {
                     create: questions.map((q, i) => ({
-                    question: q.question,
-                    answer: i % 2 === 0 ? 'Ya' : 'Tidak'
+                    questionId: q.id,
+                    answer: i % 2 === 0 ? true : false
                     }))
                 }
             }

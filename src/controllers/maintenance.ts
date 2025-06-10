@@ -1,31 +1,52 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
 
 const prisma = new PrismaClient();
 
 // ✅ 1. Create Daily Maintenance
 export const createDailyMaintenance = async (req: Request, res: Response) => {
-  const { machineId, studentId, responses } = req.body;
+  const { machineId, studentEmail, responses } = req.body;
+  console.log("cek machineId, studentEmail, responses", machineId, studentEmail, responses)
+
+  if (!machineId || !studentEmail || !Array.isArray(responses)) {
+    res.status(400).json({ error: 'Invalid payload' });
+    throw new Error('Invalid create daily maintenance payload')
+  }
+
+  const today = startOfDay(new Date());
+
+  const alreadyExists = await prisma.dailyMaintenance.findFirst({
+    where: {
+      machineId,
+      dateOnly: today,
+    },
+  });
+
+  if (alreadyExists) {
+    res.status(400).json({ error: 'Maintenance for today already exists' });
+    throw new Error('Maintenance for today already exists')
+  }
 
   try {
-    const result = await prisma.dailyMaintenance.create({
+    const dailyMaintenance = await prisma.dailyMaintenance.create({
       data: {
         machineId,
-        studentId,
+        studentEmail,
+        dateOnly: today,
         responses: {
-          create: responses.map((r: { question: string; answer: string }) => ({
-            question: r.question,
-            answer: r.answer
+          create: responses.map(r => ({
+            answer: r.answer=== 'true',
+            questionId: r.questionId
           }))
         }
       },
       include: { responses: true }
     });
 
-    res.status(201).json(result);
-  } catch (err) {
-    console.error(err);
+    res.status(201).json(dailyMaintenance);
+  } catch (error) {
+    console.error("Error creating daily maintenance:", error);
     res.status(500).json({ error: 'Failed to create daily maintenance' });
   }
 };
@@ -152,10 +173,10 @@ export const getAllMachines = async (_req: Request, res: Response) => {
   }
 };
 
-export const getChecklistTemplate = async (req: Request, res: Response) => {
+export const getQuestionTemplate = async (req: Request, res: Response) => {
   const { machineId } = req.params;
   try {
-    const templates = await prisma.checklistTemplate.findMany({
+    const templates = await prisma.questionTemplate.findMany({
       where: { machineId },
       orderBy: { order: 'asc' }
     });
@@ -165,15 +186,15 @@ export const getChecklistTemplate = async (req: Request, res: Response) => {
   }
 };
 
-export const submitDailyChecklist = async (req: Request, res: Response) => {
-  const { machineId, studentId, responses } = req.body;
-
+export const submitDailyQuestion = async (req: Request, res: Response) => {
+  const { machineId, studentEmail, responses } = req.body;
+  const today = startOfDay(new Date());
   try {
     const daily = await prisma.dailyMaintenance.create({
       data: {
         machineId,
-        studentId,
-        date: new Date(),
+        studentEmail,
+        dateOnly: today,
         responses: {
           create: responses.map((r: any) => ({
             question: r.question,

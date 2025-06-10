@@ -1,21 +1,72 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+const SESSION_EXPIRE_TIME = process.env.JWT_EXPIRES_IN ?? '3600000';
 
 /**
  * Create a new user
  */
 export const createUser = async (req: Request, res: Response) => {
+  console.log("cek masuk createUser", req.body)
   try {
-    const { id, email, password, name, role } = req.body;
+    const { email, password, name, role } = req.body;
+    const hashed = await bcrypt.hash(password, 10);
+    
+    console.log("cek hashed", hashed)
     const user = await prisma.user.create({
-      data: { id, email, password, name, role },
+      data: { email, password: hashed, name, role },
     });
+
     res.status(201).json(user);
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: 'Failed to create user' });
+  }
+};
+
+/**
+ * POST /login
+ * Body: { email, password }
+ * Response: { token } on success, or 400/401 + { message } on failure
+ */
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({ message: 'Email and password required' });
+    throw new Error('Email and password required');
+  }
+
+  try {
+    // 1) find user by email
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      res.status(401).json({ message: 'Invalid credentials - 1' });
+      throw new Error('Invalid credentials');
+    }
+
+    // 2) compare passwords
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      res.status(401).json({ message: 'Invalid credentials - 2' });
+      throw new Error('Invalid credentials');
+    }
+
+    // 3) sign JWT
+    const payload = { sub: user.id, role: user.role };
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET as string,
+      { expiresIn: parseInt(SESSION_EXPIRE_TIME) } // Token expires in 1 hour
+    );
+
+    // 4) return token
+    res.status(200).json({ token, message: 'Login successful' });
+  } catch (err: any) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 

@@ -8,13 +8,14 @@ import {
   getMachineByType
 } from '../controllers/machine';
 
-const router = Router();
+const protectedMachinerouter = Router();
 
-router.get('/', getAllMachines);             // GET /machines
-router.get('/:machineId', getMachineById);          // GET /machines/:id
-router.get('/type/:machineType', getMachineByType); // GET /machines/type/:machineType
-router.post('/', createMachine);             // POST /machines
-router.put('/:machineId', updateMachine);           // PUT /machines/:id
-router.delete('/:machineId', deleteMachine);        // DELETE /machines/:id
+export const allMachines = getAllMachines;
+export const machineById = getMachineById;
+export const machineByType = getMachineByType;
 
-export default router;
+protectedMachinerouter.post('/', createMachine);             // POST /machines
+protectedMachinerouter.put('/:machineId', updateMachine);           // PUT /machines/:id
+protectedMachinerouter.delete('/:machineId', deleteMachine);        // DELETE /machines/:id
+
+export {protectedMachinerouter};

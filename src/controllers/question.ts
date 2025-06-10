@@ -1,24 +1,28 @@
-// controllers/checklist.ts
+// controllers/Question.ts
 import { Request, Response } from 'express';
 import { MachineType, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const getAllChecklist = async (_req: Request, res: Response) => {
+export const getAllQuestion = async (_req: Request, res: Response) => {
   try {
-    const templates = await prisma.checklistTemplate.findMany();
+    const templates = await prisma.questionTemplate.findMany({
+      include: {machine: true},
+    });
     res.json(templates);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch templates' });
   }
 };
 
-export const getChecklistByType = async (req: Request, res: Response) => {
+export const getQuestionByType = async (req: Request, res: Response) => {
   const { machineType } = req.params;
+  console.log("cek machineType", machineType)
   try {
-    const templates = await prisma.checklistTemplate.findMany({
+    const templates = await prisma.questionTemplate.findMany({
       where: { machineType: machineType as MachineType },
-      orderBy: { id: 'asc' }
+      orderBy: { id: 'asc' },
+      include: {machine: true},
     });
     res.json(templates);
   } catch (error) {
@@ -26,11 +30,12 @@ export const getChecklistByType = async (req: Request, res: Response) => {
   }
 };
 
-export const getChecklistById = async (req: Request, res: Response) => {
+export const getQuestionById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-      const template = await prisma.checklistTemplate.findUniqueOrThrow({
-        where: { id: parseInt(id) }
+      const template = await prisma.questionTemplate.findUniqueOrThrow({
+        where: { id: id },
+        include: {machine: true},
       });
       res.json(template);
     } catch (error) {
@@ -38,10 +43,10 @@ export const getChecklistById = async (req: Request, res: Response) => {
     }
   };
 
-export const createChecklist = async (req: Request, res: Response) => {
+export const createQuestion = async (req: Request, res: Response) => {
   const { machineType, question, order, isActive  } = req.params;
   try {
-    const template = await prisma.checklistTemplate.create({
+    const template = await prisma.questionTemplate.create({
         data: {
             machineType: machineType as MachineType,
             question: question,
@@ -55,11 +60,11 @@ export const createChecklist = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteChecklist = async (req: Request, res: Response) => {
+export const deleteQuestion = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const template = await prisma.checklistTemplate.delete({
-      where: { id: parseInt(id) }
+    const template = await prisma.questionTemplate.delete({
+      where: { id: id }
     });
     res.json(template);
   } catch (error) {
@@ -67,11 +72,11 @@ export const deleteChecklist = async (req: Request, res: Response) => {
   }
 };
 
-export const updateChecklist = async (req: Request, res: Response) => {
+export const updateQuestion = async (req: Request, res: Response) => {
   const { id, machineType, question, order, isActive } = req.params;
   try {
-    const template = await prisma.checklistTemplate.update({
-      where: { id: parseInt(id) },
+    const template = await prisma.questionTemplate.update({
+      where: { id: id },
         data: {
             question: question,
             machineType: machineType as MachineType,
