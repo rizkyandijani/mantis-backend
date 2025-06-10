@@ -55,7 +55,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     // 3) sign JWT
-    const payload = { sub: user.id, role: user.role };
+    const payload = { sub: user.id, role: user.role, email: user.email };
     const token = jwt.sign(
       payload,
       process.env.JWT_SECRET as string,
@@ -124,11 +124,11 @@ export const getUserByEmail = async (req: Request, res: Response) => {
  */
 export const getUsersByRole = async (req: Request, res: Response) => {
   const { role } = req.params;
-  if (!['admin', 'student', 'instructor'].includes(role)) {
+  if (![Role.admin, Role.student, Role.instructor].includes(role as Role)) {
     res.status(400).json({ error: 'Invalid role parameter' });
   }
   try {
-    const users = await prisma.user.findMany({ where: { role: role as Role } });
+    const users = await prisma.user.findMany({ omit: {password: true}, where: { role: role as Role } });
     res.json(users);
   } catch (error: any) {
     console.error(error);

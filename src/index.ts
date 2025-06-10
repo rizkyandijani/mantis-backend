@@ -3,7 +3,7 @@ import cors from "cors";
 import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, monthlyMaintenances, summaryMaintenance} from "./routes/maintenanceRoutes";
 import { Role } from '@prisma/client';
 import {allMachines, machineById, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
-import {loginRoute, protectedUserRouter} from "./routes/userRoutes";
+import {loginRoute, usersByRole, protectedUserRouter} from "./routes/userRoutes";
 import {allQuestion, allQuestionById, allQuestionByType, protectedQuestionRouter} from "./routes/questionRoutes";
 import {authenticateJWT, authorizeRoles} from "./middleware/auth";
 
@@ -34,6 +34,9 @@ app.get('/api/machine/:machineType', machineByType);
 
 app.use("/api/machine", authorizeRoles(Role.admin, Role.instructor), protectedMachinerouter);
 app.use("/api/questionTemplate", authorizeRoles(Role.admin, Role.instructor), protectedQuestionRouter);
+
+app.get('/api/user/role/:role', authorizeRoles(Role.admin, Role.instructor, Role.student), usersByRole);
+
 app.use("/api/user", authorizeRoles(Role.admin, Role.instructor), protectedUserRouter);
 
 app.get("/", (req, res) => {

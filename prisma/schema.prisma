@@ -26,6 +26,12 @@ enum MachineType {
   FRAIS
 }
 
+enum DailyMaintenanceStatus {
+  APPROVED
+  REJECTED
+  PENDING
+}
+
 /// New enum for machine status
 enum MachineStatus {
   OPERATIONAL // Normal running
@@ -48,14 +54,19 @@ model QuestionTemplate {
 }
 
 model DailyMaintenance {
-  id        String             @id @default(cuid())
-  date      DateTime           @default(now())
-  dateOnly  DateTime           // store only YYYY-MM-DD (waktu di-zerokan)
-  machine   Machine            @relation(fields: [machineId], references: [id])
-  machineId String
-  student   User               @relation(fields: [studentEmail], references: [email])
+  id           String             @id @default(cuid())
+  date         DateTime           @default(now())
+  dateOnly     DateTime // store only YYYY-MM-DD (waktu di-zerokan)
+  machine      Machine            @relation(fields: [machineId], references: [id])
+  machineId    String
+  student      User               @relation("StudentMaintenances", fields: [studentEmail], references: [email])
   studentEmail String
-  responses QuestionResponse[]
+  approvedBy   User?              @relation("ApprovedByInstructor", fields: [approvedById], references: [id])
+  approvedById String?
+  approvedAt   DateTime?
+  status       DailyMaintenanceStatus
+  approvalNote String?
+  responses    QuestionResponse[]
 
   @@unique([machineId, dateOnly])
 }
@@ -89,13 +100,14 @@ enum Role {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  email             String             @unique
-  password          String
-  name              String?
-  role              Role               @default(student)
-  dailyMaintenances DailyMaintenance[]
-  statusLogs        MachineStatusLog[] @relation(fields: [], references: [])
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  password            String
+  name                String?
+  role                Role               @default(student)
+  dailyMaintenances   DailyMaintenance[] @relation("StudentMaintenances")
+  maintenanceApproved DailyMaintenance[] @relation("ApprovedByInstructor")
+  statusLogs          MachineStatusLog[] @relation(fields: [], references: [])
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 }

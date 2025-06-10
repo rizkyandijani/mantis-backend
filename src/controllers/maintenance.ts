@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
 import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
 
 const prisma = new PrismaClient();
 
 // ✅ 1. Create Daily Maintenance
 export const createDailyMaintenance = async (req: Request, res: Response) => {
-  const { machineId, studentEmail, responses } = req.body;
-  console.log("cek machineId, studentEmail, responses", machineId, studentEmail, responses)
+  const { machineId, studentEmail, instructorId, responses } = req.body;
+  console.log("cek machineId, studentEmail, responses, instructorId", machineId, studentEmail, responses, instructorId)
 
-  if (!machineId || !studentEmail || !Array.isArray(responses)) {
+  if (!machineId || !studentEmail || !instructorId || !Array.isArray(responses)) {
     res.status(400).json({ error: 'Invalid payload' });
     throw new Error('Invalid create daily maintenance payload')
   }
@@ -24,7 +24,7 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
   });
 
   if (alreadyExists) {
-    res.status(400).json({ error: 'Maintenance for today already exists' });
+    res.status(400).json({ message: 'Maintenance for today already exists' });
     throw new Error('Maintenance for today already exists')
   }
 
@@ -34,9 +34,11 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
         machineId,
         studentEmail,
         dateOnly: today,
+        approvedById: instructorId,
+        status: DailyMaintenanceStatus.PENDING,
         responses: {
           create: responses.map(r => ({
-            answer: r.answer=== 'true',
+            answer: r.answer,
             questionId: r.questionId
           }))
         }
@@ -63,6 +65,84 @@ export const getAllDailyMaintenances = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch all maintenance records' });
   }
 };
+
+export const getDailyMaintenancesByStatus = async (req: Request, res: Response) => {
+  const { status, approverId } = req.params;
+
+  if (!status) {
+    res.status(400).json({ error: 'Status parameter is required' });
+  }
+
+  try {
+    const records = await prisma.dailyMaintenance.findMany({
+      where: { status: status as DailyMaintenanceStatus, approvedById: approverId },
+      include: { machine: true, responses: true, student: true },
+      orderBy: { date: 'desc' }
+    });
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: `Failed to fetch maintenance records with status ${status}` });
+  }
+}
+
+export const getDailyMaintenancesDetail = async (req: Request, res: Response) => {
+  const { maintenanceId } = req.params;
+
+  if (!maintenanceId) {
+    res.status(400).json({ error: 'maintenance Id parameter is required' });
+  }
+
+  try {
+    const result = await prisma.dailyMaintenance.findUnique({
+      where: { id: maintenanceId },
+      include: {machine: true, student: true, responses: {include: {question: true}}}
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: `Failed to fetch maintenance detail` });
+  }
+}
+
+export const approveOrRejectDailyMaintenance = async (req: Request, res: Response) => {
+  const { maintenanceId } = req.params;
+  const { status, note } = req.body
+  console.log("cek maintenanceId", maintenanceId)
+  console.log("cek status, note", status, note)
+
+  if (!maintenanceId) {
+    res.status(400).json({ error: 'maintenance Id parameter is required' });
+  }
+
+  try {
+    const result = await prisma.dailyMaintenance.findUnique({
+      where: { id: maintenanceId },
+      include: {machine: true, student: true, responses: true}
+    });
+    console.log("cek result", result)
+    if(!result){
+      res.status(404).json({error: 'No maintenance records found'})
+      throw new Error('No maintenance records found')
+    }
+    if (result.status !== DailyMaintenanceStatus.PENDING) {
+      res.status(400).json({ error: 'Maintenance is not in pending status' });
+      throw new Error('Maintenance is not in pending status');
+    }
+    const updatedMaintenance = await prisma.dailyMaintenance.update({
+      where: { id: maintenanceId },
+      data: {
+        status: status as DailyMaintenanceStatus,
+        approvedAt: new Date(),
+        approvalNote: note,
+      },
+      include: {machine: true, student: true, responses: {
+        include: {question: true}
+      },}
+    });
+    res.status(200).json(updatedMaintenance);
+  } catch (err) {
+    res.status(500).json({ error: `Failed to fetch maintenance detail` });
+  }
+}
 
 
 // ✅ 2. Get All monthly Maintenances
@@ -183,34 +263,6 @@ export const getQuestionTemplate = async (req: Request, res: Response) => {
     res.json(templates);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch template' });
-  }
-};
-
-export const submitDailyQuestion = async (req: Request, res: Response) => {
-  const { machineId, studentEmail, responses } = req.body;
-  const today = startOfDay(new Date());
-  try {
-    const daily = await prisma.dailyMaintenance.create({
-      data: {
-        machineId,
-        studentEmail,
-        dateOnly: today,
-        responses: {
-          create: responses.map((r: any) => ({
-            question: r.question,
-            answer: r.answer
-          }))
-        }
-      },
-      include: {
-        responses: true
-      }
-    });
-
-    res.status(201).json(daily);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to submit checklist' });
   }
 };
 

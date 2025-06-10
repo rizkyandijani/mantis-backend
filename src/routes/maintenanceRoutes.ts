@@ -6,9 +6,11 @@ import {
   getMonthlySummaryByMachine,
   getMonthlySummaryBySection,
   getMonthlySummaryByUnit,
-  getAllDailyMaintenances
+  getAllDailyMaintenances,
+  getDailyMaintenancesByStatus,
+  getDailyMaintenancesDetail,
+  approveOrRejectDailyMaintenance
 } from "../controllers/maintenance";
-import { get } from "http";
 
 const protectedMaintenanceRouter = Router();
 
@@ -17,6 +19,11 @@ export const allDailyMaintenances = getAllDailyMaintenances;
 export const monthlyMaintenances = getMonthlyMaintenances;
 export const summaryMaintenance = getMonthlySummary;
 
+console.log("cek masuk route maintenance")
+
+protectedMaintenanceRouter.get("/:maintenanceId", getDailyMaintenancesDetail);
+protectedMaintenanceRouter.put("/:maintenanceId/updateStatus/", approveOrRejectDailyMaintenance);
+protectedMaintenanceRouter.get("/status/:status/approver/:approverId", getDailyMaintenancesByStatus);
 protectedMaintenanceRouter.get("/summary/machine/:machineId", getMonthlySummaryByMachine);
 protectedMaintenanceRouter.get("/summary/section/:section", getMonthlySummaryBySection);
 protectedMaintenanceRouter.get("/summary/unit/:unit", getMonthlySummaryByUnit);
