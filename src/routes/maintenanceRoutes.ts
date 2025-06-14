@@ -19,8 +19,6 @@ export const allDailyMaintenances = getAllDailyMaintenances;
 export const monthlyMaintenances = getMonthlyMaintenances;
 export const summaryMaintenance = getMonthlySummary;
 
-console.log("cek masuk route maintenance")
-
 protectedMaintenanceRouter.get("/:maintenanceId", getDailyMaintenancesDetail);
 protectedMaintenanceRouter.put("/:maintenanceId/updateStatus/", approveOrRejectDailyMaintenance);
 protectedMaintenanceRouter.get("/status/:status/approver/:approverId", getDailyMaintenancesByStatus);

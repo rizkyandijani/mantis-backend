@@ -1,0 +1,500 @@
+[2025-06-14 22:52:35] error: [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "OPERATIONAL",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'OPERATIONAL' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 22:55:09] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "OPERATIONAL",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'OPERATIONAL' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:00:47] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "OPERATIONAL",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'OPERATIONAL' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:14:20] error: [POST] /api/machine/B2/log - undefined
+[2025-06-14 23:16:26] error: [PUT] /api/machine/B2/log - [
+  {
+    "received": "MAINTENANCE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "OPERATIONAL",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'OPERATIONAL' | 'OUT_OF_SERVICE', received 'MAINTENANCE'"
+  }
+]
+[2025-06-14 23:30:14] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:30:27] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:31:11] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:32:56] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:33:48] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:40:35] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:47:24] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:47:51] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:07] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:10] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:12] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:13] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:14] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:16] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:29] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:30] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:32] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:48:55] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:49:33] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:49:35] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:50:08] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:50:10] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:50:45] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:51:18] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:52:35] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:53:00] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:53:01] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:57:47] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-14 23:57:49] error: [PUT] /api/machine/B1/log - [
+  {
+    "received": "OUT_OF_SE",
+    "code": "invalid_enum_value",
+    "options": [
+      "OPERATIONAL",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE', received 'OUT_OF_SE'"
+  }
+]
+[2025-06-15 00:10:11] error: [GET] /api//auth/validate-token - undefined
+[2025-06-15 00:10:11] error: [GET] /api//auth/validate-token - undefined
+[2025-06-15 00:10:12] error: [GET] /api//auth/validate-token - undefined
+[2025-06-15 00:13:13] error: [GET] /api//auth/validate-token - undefined

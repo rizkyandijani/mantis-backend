@@ -21,6 +21,7 @@ export const authenticateJWT: RequestHandler = (req, res, next) => {
   try {
     const secret = process.env.JWT_SECRET!;
     const payload = jwt.verify(token, secret) as { sub: string; role: Role };
+    console.log("cek payload", payload);
     (req as AuthRequest).user = payload;
     next();
   } catch {

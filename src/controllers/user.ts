@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
-const SESSION_EXPIRE_TIME = process.env.JWT_EXPIRES_IN ?? '3600000';
+const SESSION_EXPIRE_TIME = process.env.JWT_EXPIRES_IN ?? '3600';
+console.log("cek session expire time", SESSION_EXPIRE_TIME)
 
 /**
  * Create a new user

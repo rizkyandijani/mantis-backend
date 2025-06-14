@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "logs/.4f63c2f833e4e123c190ae367682addabe5e896e-audit.json",
+    "files": [
+        {
+            "date": 1749916814365,
+            "name": "logs/mantis-2025-06-14.log",
+            "hash": "eaef25124fd114baab11f48e8ca345fce6512fcfe01479326e554a12fcf7614e"
+        }
+    ],
+    "hashType": "sha256"
+}

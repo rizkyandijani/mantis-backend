@@ -1,6 +1,11 @@
 // controllers/machine.ts
 import { Request, Response } from 'express';
-import { MachineType, PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+import { MachineStatus, MachineType, PrismaClient, Prisma } from '@prisma/client';
+import { AuthRequest } from '../middleware/auth';
+import {CodeError} from '../libs/code_error';
+import { updateMachineStatusLogSchema } from '../models/schema';
+import {logger} from "../utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -9,7 +14,7 @@ export const getAllMachines = async (_req: Request, res: Response) => {
     const machines = await prisma.machine.findMany();
     res.json(machines);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch machines', detail: error });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch machines', fallBackCode: 500};
   }
 };
 
@@ -22,7 +27,7 @@ export const getMachineByType = async (req: Request, res: Response) => {
     });
     res.json(machine);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch machine by type', detail: error });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch machine by type', fallBackCode: 500};
   }
 };
 
@@ -30,11 +35,12 @@ export const getMachineById = async (req: Request, res: Response) => {
     const { machineId } = req.params;
     try {
       const machine = await prisma.machine.findUniqueOrThrow({
-        where: { id: machineId }
+        where: { id: machineId },
+        include: {statusLogs: true}
       });
       res.json(machine);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch machine by id', detail: error });
+      throw {actualError: error, fallBackMessage: 'Failed to fetch machine by id', fallBackCode: 500};
     }
   };
 
@@ -51,7 +57,7 @@ export const createMachine = async (req: Request, res: Response) => {
     });
     res.status(201).json(machine);
   } catch (error) {
-    res.status(500).json({ error: `Failed to create machine`, detail: error });
+    throw {actualError: error, fallBackMessage: 'Failed to create machine', fallBackCode: 500};
   }
 };
 
@@ -63,7 +69,7 @@ export const deleteMachine = async (req: Request, res: Response) => {
     });
     res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete machine', detail: error });
+    throw {actualError: error, fallBackMessage: 'Failed to delete machine', fallBackCode: 500};
   }
 };
 
@@ -82,6 +88,58 @@ export const updateMachine = async (req: Request, res: Response) => {
     });
     res.json(machine);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update machine', detail: error });
+    throw {actualError: error, fallBackMessage: 'Failed to update machine', fallBackCode: 500};
+  }
+};
+
+export const createMachineStatusLog = async (req: AuthRequest, res: Response) => {
+  const {machineId} = req.params
+  const { status, comment } = req.body;
+  const user = req.user;
+  try {
+    const machine = await prisma.machine.findUnique({
+      where: {id: machineId}
+    })
+    if (!machine) {
+      throw new CodeError('Machine not found', 404);
+    }
+    const machineLog = await prisma.machineStatusLog.create({
+      data: {
+        machineId: machineId,
+        oldStatus: machine.status,
+        newStatus: status,
+        comment: comment ?? undefined, // Allow comment to be optional
+        changedById: user.sub
+      },
+    })
+    return machineLog;
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to create machine status log', fallBackCode: 500};
+  }
+}
+
+export const updateMachineStatusLogs = async (req: AuthRequest, res: Response) => {
+  const {machineId} = req.params
+  const { status, comment } = req.body;
+  try {
+    req.body = updateMachineStatusLogSchema.parse({ status, comment });
+    const logs = comment ? await createMachineStatusLog(req, res) : undefined;
+    const machine = await prisma.machine.findUnique({
+      where: {id: machineId}
+    }).then(machine => {
+      if (!machine)
+        throw new CodeError('Machine not found', 404);
+      
+      return prisma.machine.update({
+        where: { id: machineId },
+        data: {
+          status: status
+        },
+        include: { statusLogs: true }
+      });
+    })
+    res.json(machine);
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to update machine status or log', fallBackCode: 500};
   }
 };
