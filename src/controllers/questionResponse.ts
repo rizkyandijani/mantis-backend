@@ -11,7 +11,8 @@ export const getAllQuestionResponse = async (_req: Request, res: Response) => {
     });
     res.json(questionResponse);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch questionResponses' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch questionResponses', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch questionResponses' });
   }
 };
 
@@ -27,6 +28,7 @@ export const createQuestionResponse = async (req: Request, res: Response) => {
       });
       res.json(questionResponse);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create checklist response' });
+      throw {actualError: error, fallBackMessage: 'Failed to create checklist response', fallBackCode: 500};
+      // res.status(500).json({ error: 'Failed to create checklist response' });
     }
   };

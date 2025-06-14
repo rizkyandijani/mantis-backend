@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { CodeError } from '../libs/code_error';
 
 const prisma = new PrismaClient();
 const SESSION_EXPIRE_TIME = process.env.JWT_EXPIRES_IN ?? '3600';
@@ -11,20 +12,18 @@ console.log("cek session expire time", SESSION_EXPIRE_TIME)
  * Create a new user
  */
 export const createUser = async (req: Request, res: Response) => {
-  console.log("cek masuk createUser", req.body)
   try {
     const { email, password, name, role } = req.body;
     const hashed = await bcrypt.hash(password, 10);
     
-    console.log("cek hashed", hashed)
     const user = await prisma.user.create({
       data: { email, password: hashed, name, role },
     });
 
     res.status(201).json(user);
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to create user' });
+    throw {actualError: error, fallBackMessage: 'Failed to create user', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to create user' });
   }
 };
 
@@ -36,23 +35,20 @@ export const createUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400).json({ message: 'Email and password required' });
-    throw new Error('Email and password required');
+    throw new CodeError('Email and password required', 400);
   }
 
   try {
     // 1) find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      res.status(401).json({ message: 'Invalid credentials - 1' });
-      throw new Error('Invalid credentials');
+      throw new CodeError('Invalid credential-1', 401);
     }
 
     // 2) compare passwords
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      res.status(401).json({ message: 'Invalid credentials - 2' });
-      throw new Error('Invalid credentials');
+      throw new CodeError('Invalid credentials-2', 401);
     }
 
     // 3) sign JWT
@@ -65,9 +61,9 @@ export const loginUser = async (req: Request, res: Response) => {
 
     // 4) return token
     res.status(200).json({ token, message: 'Login successful' });
-  } catch (err: any) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+  } catch (error: unknown) {
+    throw {actualError: error, fallBackMessage: 'Failed to login', fallBackCode: 500};
+    // res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -84,8 +80,8 @@ export const updateUser = async (req: Request, res: Response) => {
     });
     res.json(user);
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to update user' });
+    throw {actualError: error, fallBackMessage: 'Failed to update user', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to update user' });
   }
 };
 
@@ -98,8 +94,8 @@ export const deleteUser = async (req: Request, res: Response) => {
     await prisma.user.delete({ where: { id } });
     res.status(204).send();
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to delete user' });
+    throw {actualError: error, fallBackMessage: 'Failed to delete user', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to delete user' });
   }
 };
 
@@ -111,12 +107,12 @@ export const getUserByEmail = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
+      throw new CodeError('User not found', 404);
     }
     res.json(user);
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch user' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch user', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch user' });
   }
 };
 
@@ -126,14 +122,14 @@ export const getUserByEmail = async (req: Request, res: Response) => {
 export const getUsersByRole = async (req: Request, res: Response) => {
   const { role } = req.params;
   if (![Role.admin, Role.student, Role.instructor].includes(role as Role)) {
-    res.status(400).json({ error: 'Invalid role parameter' });
+    throw new CodeError('Invalid role parameter', 400)
   }
   try {
     const users = await prisma.user.findMany({ omit: {password: true}, where: { role: role as Role } });
     res.json(users);
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch users by role' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch users by Role', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch users by role' });
   }
 };
 
@@ -145,7 +141,7 @@ export const getAllUsers = async (_req: Request, res: Response) => {
     const users = await prisma.user.findMany();
     res.json(users);
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch users', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch users' });
   }
 };

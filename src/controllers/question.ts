@@ -11,7 +11,8 @@ export const getAllQuestion = async (_req: Request, res: Response) => {
     });
     res.json(templates);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch templates' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch templates', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch templates' });
   }
 };
 
@@ -26,7 +27,8 @@ export const getQuestionByType = async (req: Request, res: Response) => {
     });
     res.json(templates);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch templates by machine type' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch templates by machine type', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch templates by machine type' });
   }
 };
 
@@ -39,7 +41,8 @@ export const getQuestionById = async (req: Request, res: Response) => {
       });
       res.json(template);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch template by id' });
+      throw {actualError: error, fallBackMessage: 'Failed to fetch template by id', fallBackCode: 500};
+      // res.status(500).json({ error: 'Failed to fetch template by id' });
     }
   };
 
@@ -56,7 +59,8 @@ export const createQuestion = async (req: Request, res: Response) => {
     });
     res.json(template);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create template' });
+    throw {actualError: error, fallBackMessage: 'Failed to create template', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to create template' });
   }
 };
 
@@ -68,7 +72,8 @@ export const deleteQuestion = async (req: Request, res: Response) => {
     });
     res.json(template);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete template' });
+    throw {actualError: error, fallBackMessage: 'Failed to delete template', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to delete template' });
   }
 };
 
@@ -86,6 +91,7 @@ export const updateQuestion = async (req: Request, res: Response) => {
     });
     res.json(template);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update template' });
+    throw {actualError: error, fallBackMessage: 'Failed to update template', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to update template' });
   }
 };

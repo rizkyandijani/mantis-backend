@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
 import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
+import { CodeError } from '../libs/code_error';
 
 const prisma = new PrismaClient();
 
@@ -24,8 +25,7 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
   });
 
   if (alreadyExists) {
-    res.status(400).json({ message: 'Maintenance for today already exists' });
-    throw new Error('Maintenance for today already exists')
+    throw new CodeError('Maintenance for today already exists', 400)
   }
 
   try {
@@ -49,7 +49,8 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
     res.status(201).json(dailyMaintenance);
   } catch (error) {
     console.error("Error creating daily maintenance:", error);
-    res.status(500).json({ error: 'Failed to create daily maintenance' });
+    throw {actualError: error, fallBackMessage: 'Failed to create daily maintenance', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to create daily maintenance' });
   }
 };
 
@@ -61,8 +62,9 @@ export const getAllDailyMaintenances = async (req: Request, res: Response) => {
       orderBy: { date: 'desc' }
     });
     res.json(records);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch all maintenance records' });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch all maintenance records', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch all maintenance records' });
   }
 };
 
@@ -70,7 +72,7 @@ export const getDailyMaintenancesByStatus = async (req: Request, res: Response) 
   const { status, approverId } = req.params;
 
   if (!status) {
-    res.status(400).json({ error: 'Status parameter is required' });
+    throw new CodeError('Status parameter is required', 400)
   }
 
   try {
@@ -80,8 +82,9 @@ export const getDailyMaintenancesByStatus = async (req: Request, res: Response) 
       orderBy: { date: 'desc' }
     });
     res.json(records);
-  } catch (err) {
-    res.status(500).json({ error: `Failed to fetch maintenance records with status ${status}` });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: `Failed to fetch maintenance records with status ${status}`, fallBackCode: 500};
+    // res.status(500).json({ error: `Failed to fetch maintenance records with status ${status}` });
   }
 }
 
@@ -98,19 +101,18 @@ export const getDailyMaintenancesDetail = async (req: Request, res: Response) =>
       include: {machine: true, student: true, responses: {include: {question: true}}}
     });
     res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({ error: `Failed to fetch maintenance detail` });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch maintenance detail', fallBackCode: 500};
+    // res.status(500).json({ error: `Failed to fetch maintenance detail` });
   }
 }
 
 export const approveOrRejectDailyMaintenance = async (req: Request, res: Response) => {
   const { maintenanceId } = req.params;
   const { status, note } = req.body
-  console.log("cek maintenanceId", maintenanceId)
-  console.log("cek status, note", status, note)
 
   if (!maintenanceId) {
-    res.status(400).json({ error: 'maintenance Id parameter is required' });
+    throw new CodeError('maintenance Id parameter is required', 400)
   }
 
   try {
@@ -118,14 +120,11 @@ export const approveOrRejectDailyMaintenance = async (req: Request, res: Respons
       where: { id: maintenanceId },
       include: {machine: true, student: true, responses: true}
     });
-    console.log("cek result", result)
     if(!result){
-      res.status(404).json({error: 'No maintenance records found'})
-      throw new Error('No maintenance records found')
+      throw new CodeError('No maintenance records found', 404)
     }
     if (result.status !== DailyMaintenanceStatus.PENDING) {
-      res.status(400).json({ error: 'Maintenance is not in pending status' });
-      throw new Error('Maintenance is not in pending status');
+      throw new CodeError('Maintenance is not in pending status', 400);
     }
     const updatedMaintenance = await prisma.dailyMaintenance.update({
       where: { id: maintenanceId },
@@ -139,8 +138,9 @@ export const approveOrRejectDailyMaintenance = async (req: Request, res: Respons
       },}
     });
     res.status(200).json(updatedMaintenance);
-  } catch (err) {
-    res.status(500).json({ error: `Failed to fetch maintenance detail` });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to Approve or Reject maintenance detail', fallBackCode: 500};
+    // res.status(500).json({ error: `Failed to fetch maintenance detail` });
   }
 }
 
@@ -148,9 +148,6 @@ export const approveOrRejectDailyMaintenance = async (req: Request, res: Respons
 // ✅ 2. Get All monthly Maintenances
 export const getMonthlyMaintenances = async (req: Request, res: Response) => {
   const { month, year } = req.query;
-  console.log("cek request", req)
-  console.log("cek month and year", month, year)
-  console.log("cek req.params", req.query)
   try {
     const monthNumber = month ? parseInt(month as string) : 0; // Ensure month is a number
     const records = await prisma.dailyMaintenance.findMany({
@@ -164,8 +161,9 @@ export const getMonthlyMaintenances = async (req: Request, res: Response) => {
       orderBy: { date: 'desc' }
     });
     res.json(records);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch maintenance records' });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch monthly maintenance records', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch maintenance records' });
   }
 };
 
@@ -187,8 +185,9 @@ export const getMonthlySummaryByMachine = async (req: Request, res: Response) =>
     });
 
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to summarize by machine' });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to summarize by machine', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to summarize by machine' });
   }
 };
 
@@ -213,8 +212,9 @@ export const getMonthlySummaryBySection = async (req: Request, res: Response) =>
     });
 
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to summarize by section' });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to summarize by section', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to summarize by section' });
   }
 };
 
@@ -239,8 +239,9 @@ export const getMonthlySummaryByUnit = async (req: Request, res: Response) => {
     });
 
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to summarize by unit' });
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to summarize by unit', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to summarize by unit' });
   }
 };
 
@@ -249,7 +250,8 @@ export const getAllMachines = async (_req: Request, res: Response) => {
     const machines = await prisma.machine.findMany();
     res.json(machines);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch machines' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch all machines', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch machines' });
   }
 };
 
@@ -262,7 +264,8 @@ export const getQuestionTemplate = async (req: Request, res: Response) => {
     });
     res.json(templates);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch template' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch template', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch template' });
   }
 };
 
@@ -274,11 +277,8 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
   const to = year && month ? endOfMonth(from) : new Date(); // End at current date if year/month not provided
   
   if (year && month && (!year || !month)) {
-    res.status(400).json({ error: 'Missing year or month' });
+    throw new CodeError('Missing year or month', 400)
   }
-
-  // const from = startOfMonth(new Date(Number(year), Number(month) - 1));
-  // const to = endOfMonth(from);
 
   try {
     const maintenances = await prisma.dailyMaintenance.findMany({
@@ -323,6 +323,7 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
     res.json(summary);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch monthly summary' });
+    throw {actualError: error, fallBackMessage: 'Failed to fetch monthly summary', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch monthly summary' });
   }
 };
