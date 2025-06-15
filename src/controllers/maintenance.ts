@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
 import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
 import { CodeError } from '../libs/code_error';
+import { AuthRequest } from '../middleware/auth';
 
 const prisma = new PrismaClient();
 
@@ -58,7 +59,7 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
 export const getAllDailyMaintenances = async (req: Request, res: Response) => {
   try {
     const records = await prisma.dailyMaintenance.findMany({
-      include: { machine: true, responses: true },
+      include: { machine: true, responses: true, approvedBy: true },
       orderBy: { date: 'desc' }
     });
     res.json(records);
@@ -87,6 +88,36 @@ export const getDailyMaintenancesByStatus = async (req: Request, res: Response) 
     // res.status(500).json({ error: `Failed to fetch maintenance records with status ${status}` });
   }
 }
+
+export const getMaintenanceByStudent = async (req: AuthRequest, res: Response) => {
+  const { sub } = req.user;
+
+  try {
+    const student = await prisma.user.findUnique({
+      where: {id: sub}
+    })
+    if(!student){
+      throw new CodeError('Student ID not found', 404)
+    }
+    const records = await prisma.dailyMaintenance.findMany({
+      where: {
+        studentEmail: student.email,
+      },
+      include: {
+        machine: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    res.status(200).json(records);
+  } catch (error) {
+    console.error("Error fetching student maintenance:", error);
+    throw {actualError: error, fallBackMessage: `Error fetching student maintenance:`, fallBackCode: 500};
+    // return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const getDailyMaintenancesDetail = async (req: Request, res: Response) => {
   const { maintenanceId } = req.params;
@@ -305,6 +336,7 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
           unit: m.machine.unit,
           machineType: m.machine.type,
           machineName: m.machine.name,
+          machineStatus: m.machine.status,
           reportedDays: 1,
           totalWorkingDays: 0 // placeholder
         });
@@ -319,6 +351,7 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
       totalWorkingDays: 22,
       percentage: `${((row.reportedDays / 22) * 100).toFixed(2)}%`
     }));
+    console.log("cek row summ", summary)
 
     res.json(summary);
   } catch (error) {
