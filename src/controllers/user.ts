@@ -133,6 +133,22 @@ export const getUsersByRole = async (req: Request, res: Response) => {
   }
 };
 
+export const getUserByUserId = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const user = await prisma.user.findUnique({where: {
+      id: userId
+    }});
+    if(!user){
+      throw new CodeError('User is not found.', 404)
+    }
+    res.json(user);
+  } catch (error: any) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch users by Role', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch users by role' });
+  }
+};
+
 /**
  * Get all users
  */

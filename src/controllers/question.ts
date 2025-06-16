@@ -47,14 +47,14 @@ export const getQuestionById = async (req: Request, res: Response) => {
   };
 
 export const createQuestion = async (req: Request, res: Response) => {
-  const { machineType, question, order, isActive  } = req.params;
+  const { machineType, question, order, isActive  } = req.body;
   try {
     const template = await prisma.questionTemplate.create({
         data: {
             machineType: machineType as MachineType,
             question: question,
             order: parseInt(order),
-            isActive: isActive === 'true' // Convert string to boolean
+            isActive: isActive // Convert string to boolean
         },
     });
     res.json(template);
@@ -78,7 +78,8 @@ export const deleteQuestion = async (req: Request, res: Response) => {
 };
 
 export const updateQuestion = async (req: Request, res: Response) => {
-  const { id, machineType, question, order, isActive } = req.params;
+  const {id} = req.params;
+  const { machineType, question, order, isActive } = req.body;
   try {
     const template = await prisma.questionTemplate.update({
       where: { id: id },
@@ -86,7 +87,7 @@ export const updateQuestion = async (req: Request, res: Response) => {
             question: question,
             machineType: machineType as MachineType,
             order: parseInt(order),
-            isActive: isActive === 'true' // Convert string to boolean
+            isActive: isActive // Convert string to boolean
         }
     });
     res.json(template);
