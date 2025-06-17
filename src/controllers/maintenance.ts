@@ -8,10 +8,10 @@ const prisma = new PrismaClient();
 
 // ✅ 1. Create Daily Maintenance
 export const createDailyMaintenance = async (req: Request, res: Response) => {
-  const { machineId, studentEmail, instructorId, responses } = req.body;
-  console.log("cek machineId, studentEmail, responses, instructorId", machineId, studentEmail, responses, instructorId)
+  const { machineId, studentId, studentName, instructorId, responses } = req.body;
+  console.log("cek machineId, studentId, studentName, responses, instructorId", machineId, studentId, studentName, responses, instructorId)
 
-  if (!machineId || !studentEmail || !instructorId || !Array.isArray(responses)) {
+  if (!machineId || !studentId || !studentName || !instructorId || !Array.isArray(responses)) {
     res.status(400).json({ error: 'Invalid payload' });
     throw new Error('Invalid create daily maintenance payload')
   }
@@ -33,7 +33,8 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
     const dailyMaintenance = await prisma.dailyMaintenance.create({
       data: {
         machineId,
-        studentEmail,
+        studentName,
+        studentId,
         dateOnly: today,
         approvedById: instructorId,
         status: DailyMaintenanceStatus.PENDING,
@@ -79,7 +80,7 @@ export const getDailyMaintenancesByStatus = async (req: Request, res: Response) 
   try {
     const records = await prisma.dailyMaintenance.findMany({
       where: { status: status as DailyMaintenanceStatus, approvedById: approverId },
-      include: { machine: true, responses: true, student: true },
+      include: { machine: true, responses: true },
       orderBy: { date: 'desc' }
     });
     res.json(records);
@@ -101,7 +102,7 @@ export const getMaintenanceByStudent = async (req: AuthRequest, res: Response) =
     }
     const records = await prisma.dailyMaintenance.findMany({
       where: {
-        studentEmail: student.email,
+        studentId: student.id,
       },
       include: {
         machine: true,
@@ -129,7 +130,7 @@ export const getDailyMaintenancesDetail = async (req: Request, res: Response) =>
   try {
     const result = await prisma.dailyMaintenance.findUnique({
       where: { id: maintenanceId },
-      include: {machine: true, student: true, responses: {include: {question: true}}}
+      include: {machine: true, responses: {include: {question: true}}}
     });
     res.status(200).json(result);
   } catch (error) {
@@ -149,7 +150,7 @@ export const approveOrRejectDailyMaintenance = async (req: Request, res: Respons
   try {
     const result = await prisma.dailyMaintenance.findUnique({
       where: { id: maintenanceId },
-      include: {machine: true, student: true, responses: true}
+      include: {machine: true, responses: true}
     });
     if(!result){
       throw new CodeError('No maintenance records found', 404)
@@ -164,7 +165,7 @@ export const approveOrRejectDailyMaintenance = async (req: Request, res: Respons
         approvedAt: new Date(),
         approvalNote: note,
       },
-      include: {machine: true, student: true, responses: {
+      include: {machine: true, responses: {
         include: {question: true}
       },}
     });
@@ -334,7 +335,9 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
           year: `${m.date.getFullYear()}`,
           section: m.machine.section,
           unit: m.machine.unit,
-          machineType: m.machine.type,
+          machineCommonType: m.machine.machineCommonType,
+          machineSpecificType: m.machine.machineSpecificType,
+          machineGroup: m.machine.machineGroup,
           machineName: m.machine.name,
           machineStatus: m.machine.status,
           reportedDays: 1,

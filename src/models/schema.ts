@@ -1,12 +1,15 @@
 import { z } from 'zod';
-import { PrismaClient, MachineType, MachineStatus, Role, DailyMaintenanceStatus } from '@prisma/client';
+import { PrismaClient, MachineStatus, Role, DailyMaintenanceStatus } from '@prisma/client';
 
 // const prisma = new PrismaClient();
 
 
 
 export const createMachineSchema = z.object({
-    type: z.enum([MachineType.BUBUT, MachineType.FRAIS]), // Updated to use an array of enum values
+    machineCommonType: z.string().min(1, 'common type is required'),
+    machineSpecificType: z.string().min(1, 'specific type is required'),
+    machineGroup: z.string().min(1, 'machine group is required'),
+    inventoryId: z.string().min(1, 'inventory Id is required'),
     section: z.string(),
     unit: z.string(),
     name: z.string().min(4, 'Name is required'),
@@ -14,7 +17,10 @@ export const createMachineSchema = z.object({
 });
 
 export const updateMachineSchema = z.object({
-    type: z.enum([MachineType.BUBUT, MachineType.FRAIS]), // Updated to use an array of enum values
+    machineCommonType: z.string().min(1, 'common type is required'),
+    machineSpecificType: z.string().min(1, 'specific type is required'),
+    machineGroup: z.string().min(1, 'machine group is required'),
+    inventoryId: z.string().min(1, 'inventory Id is required'),
     section: z.string().min(4, 'section is required'),
     unit: z.string().min(4, 'work unit is required'),
     name: z.string().min(4, 'Name is required'),
@@ -49,7 +55,8 @@ export const updateUserSchema = z.object({
 
 export const createDailyMaintenanceSchema = z.object({
     machineId: z.string().min(1, 'MachineId is required'),
-    studentEmail: z.string().min(1, 'MachineId is required'),
+    studentName: z.string().min(1, 'studentName is required'),
+    studentId: z.string().min(1, 'studentId is required'),
     status: z.enum([DailyMaintenanceStatus.APPROVED, DailyMaintenanceStatus.PENDING, DailyMaintenanceStatus.REJECTED]).default(DailyMaintenanceStatus.PENDING),
     responses: z.array(z.object({
         questionId: z.string().min(1, 'QuestionId is required'),
@@ -59,7 +66,8 @@ export const createDailyMaintenanceSchema = z.object({
 
 export const updateDailyMaintenanceSchema = z.object({
     machineId: z.string().min(1, 'MachineId is required'),
-    studentEmail: z.string().min(1, 'MachineId is required'),
+    studentName: z.string().min(1, 'studentName is required'),
+    studentId: z.string().min(1, 'studentId is required'),
     approvedById: z.string().min(1, 'ApprovedById is required'),
     approvalNote: z.string().min(1, 'ApprovalNote is required'),
     status: z.enum([DailyMaintenanceStatus.APPROVED, DailyMaintenanceStatus.PENDING, DailyMaintenanceStatus.REJECTED]).default(DailyMaintenanceStatus.PENDING),
@@ -73,14 +81,14 @@ export const createQuestionResponseSchema = z.object({
 })
 
 export const createQuestionTemplateSchema = z.object({
-    machineType: z.enum([MachineType.BUBUT, MachineType.FRAIS]),
+    machineCommonType: z.string().min(1, 'Question is required'),
     order: z.number().int().min(1, 'Order must be a positive integer'),
     isActive: z.boolean().default(true),
     question: z.string().min(1, 'Question is required'),
 })
 
 export const updateQuestionTemplateSchema = z.object({
-    machineType: z.enum([MachineType.BUBUT, MachineType.FRAIS]),
+    machineCommonType: z.string().min(1, 'Question is required'),
     order: z.number().int().min(1, 'Order must be a positive integer'),
     isActive: z.boolean().default(true),
     question: z.string().min(1, 'Question is required'),

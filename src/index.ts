@@ -2,13 +2,14 @@ import express from "express";
 import cors from "cors";
 import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, monthlyMaintenances, summaryMaintenance, maintenanceByStudent} from "./routes/maintenanceRoutes";
 import { Role, Prisma } from '@prisma/client';
-import {allMachines, machineById, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
+import {allMachines, machineById, machineByInventoryId, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
 import {loginRoute, usersByRole, protectedUserRouter} from "./routes/userRoutes";
 import {allQuestion, allQuestionById, allQuestionByType, protectedQuestionRouter} from "./routes/questionRoutes";
 import {authenticateJWT, authorizeRoles} from "./middleware/auth";
 import {z} from "zod";
 import { CodeError } from "./libs/code_error";
 import { logger } from './utils/logger';
+import { extractAssetDetailsFromHTML } from "./utils/common";
 
 
 const app = express();
@@ -22,13 +23,45 @@ app.get('/api/auth/validate-token', authenticateJWT, (req, res) => {
 
 app.use('/api/login', loginRoute);
 
+app.get('/api/fetch-proxy', async (req, res) => {
+  const targetUrl = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url; // Ensure targetUrl is a string
+  console.log("cek targetURL", targetUrl)
+  if (typeof targetUrl !== 'string') {
+     res.status(400).send('Invalid URL');
+  }
+  try {
+    if(targetUrl){
+      const response = await fetch(targetUrl as string);
+      console.log("cek response fetch proxy", response)
+      const text = await response.text(); // Use optional chaining
+      console.log("cek text fetch proxy =>>", text)
+      if(text){
+        const assetDetails = extractAssetDetailsFromHTML(text);
+        console.log("cek asset details", assetDetails);
+        // You can do something with assetDetails here if needed
+        res.status(200).json({data: assetDetails});
+      }
+      else{
+        console.log("No text found in response");
+        res.status(404).send('No content found');
+      }
+    }
+    res.status(500).send('Failed to fetch target page');
+  } catch (err) {
+    console.log("err fetch proxy", err)
+    res.status(500).send('Failed to fetch target page');
+  }
+})
+
+app.post('/api/maintenance', postDailyMaintenance); // POST /api/maintenance
+app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
+
 app.use('/api', authenticateJWT);
 
 app.get('/api/questionTemplate', allQuestion);
 app.get('/api/questionTemplate/:id', allQuestionById);
 app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
 
-app.post('/api/maintenance', authorizeRoles(Role.admin, Role.instructor, Role.student), postDailyMaintenance); // POST /api/maintenance
 app.get('/api/maintenance/', allDailyMaintenances); // GET /api/maintenances
 app.get('/api/maintenance/monthly', monthlyMaintenances); // GET /api/maintenances/monthly
 app.get('/api/maintenance/summary', summaryMaintenance); // GET /api/maintenances/summaryMonthly

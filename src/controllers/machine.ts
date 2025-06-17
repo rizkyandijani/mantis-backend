@@ -1,7 +1,7 @@
 // controllers/machine.ts
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { MachineStatus, MachineType, PrismaClient, Prisma } from '@prisma/client';
+import { MachineStatus, PrismaClient, Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import {CodeError} from '../libs/code_error';
 import { updateMachineStatusLogSchema } from '../models/schema';
@@ -22,7 +22,7 @@ export const getMachineByType = async (req: Request, res: Response) => {
   const { machineType } = req.params;
   try {
     const machine = await prisma.machine.findMany({
-      where: { type: machineType as MachineType },
+      where: { machineCommonType: machineType},
       orderBy: { id: 'asc' }
     });
     res.json(machine);
@@ -44,13 +44,34 @@ export const getMachineById = async (req: Request, res: Response) => {
     }
   };
 
+  export const getMachineByInventoryId = async (req: Request, res: Response) => {
+    const { inventoryId } = req.params;
+    console.log("cek inventoryId", inventoryId)
+    try {
+      const machine = await prisma.machine.findUnique({
+        where: { inventoryId: inventoryId },
+        include: {statusLogs: true}
+      });
+      console.log("cek machine", machine)
+      if(!machine){
+        throw new CodeError('Machine not found', 404);
+      }
+      res.json(machine);
+    } catch (error) {
+      throw {actualError: error, fallBackMessage: 'Failed to fetch machine by Inventory id', fallBackCode: 500};
+    }
+  };
+
 export const createMachine = async (req: Request, res: Response) => {
-  const { name, type, section, unit  } = req.body;
+  const { name, commonType, specificType, section, unit, machineGroup, inventoryId } = req.body;
   try {
     const machine = await prisma.machine.create({
         data: {
+            inventoryId: inventoryId,
             name: name,
-            type: type as MachineType,
+            machineCommonType: commonType,
+            machineSpecificType: specificType,
+            machineGroup: machineGroup,
             section: section,
             unit: unit
         },
@@ -75,13 +96,16 @@ export const deleteMachine = async (req: Request, res: Response) => {
 
 export const updateMachine = async (req: Request, res: Response) => {
   const {machineId} = req.params
-  const { name, type, section, unit } = req.body;
+  const { name, commonType, specificType, inventoryId, machineGroup, section, unit } = req.body;
   try {
     const machine = await prisma.machine.update({
       where: { id: machineId },
         data: {
             name: name,
-            type: type as MachineType,
+            machineCommonType: commonType,
+            machineSpecificType: specificType,
+            inventoryId: inventoryId,
+            machineGroup: machineGroup,
             section: section,
             unit: unit
         }

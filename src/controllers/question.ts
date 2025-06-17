@@ -1,6 +1,6 @@
 // controllers/Question.ts
 import { Request, Response } from 'express';
-import { MachineType, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ export const getQuestionByType = async (req: Request, res: Response) => {
   console.log("cek machineType", machineType)
   try {
     const templates = await prisma.questionTemplate.findMany({
-      where: { machineType: machineType as MachineType },
+      where: { machineCommonType: machineType },
       orderBy: { id: 'asc' },
       include: {machine: true},
     });
@@ -51,7 +51,7 @@ export const createQuestion = async (req: Request, res: Response) => {
   try {
     const template = await prisma.questionTemplate.create({
         data: {
-            machineType: machineType as MachineType,
+            machineCommonType: machineType,
             question: question,
             order: parseInt(order),
             isActive: isActive // Convert string to boolean
@@ -85,7 +85,7 @@ export const updateQuestion = async (req: Request, res: Response) => {
       where: { id: id },
         data: {
             question: question,
-            machineType: machineType as MachineType,
+            machineCommonType: machineType,
             order: parseInt(order),
             isActive: isActive // Convert string to boolean
         }

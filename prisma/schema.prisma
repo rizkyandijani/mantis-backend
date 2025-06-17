@@ -8,22 +8,22 @@ datasource db {
 }
 
 model Machine {
-  id                String             @id @default(cuid())
-  name              String
-  type              MachineType
-  section           String
-  unit              String
-  status            MachineStatus      @default(OPERATIONAL)
-  templates         QuestionTemplate[]
-  dailyMaintenances DailyMaintenance[]
-  statusLogs        MachineStatusLog[] @relation("MachineLogs")
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-}
+  id                  String             @id @default(cuid())
+  inventoryId         String
+  name                String
+  machineCommonType   String
+  machineGroup        String
+  machineSpecificType String
+  section             String
+  unit                String
+  status              MachineStatus      @default(OPERATIONAL)
+  templates           QuestionTemplate[]
+  dailyMaintenances   DailyMaintenance[]
+  statusLogs          MachineStatusLog[] @relation("MachineLogs")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-enum MachineType {
-  BUBUT
-  FRAIS
+  @@unique([inventoryId])
 }
 
 enum DailyMaintenanceStatus {
@@ -40,13 +40,13 @@ enum MachineStatus {
 }
 
 model QuestionTemplate {
-  id          String      @id @default(cuid())
-  machineType MachineType
-  question    String
-  order       Int
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                String   @id @default(cuid())
+  machineCommonType String
+  question          String
+  order             Int
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   machine          Machine?           @relation(fields: [machineId], references: [id])
   machineId        String?
@@ -54,14 +54,14 @@ model QuestionTemplate {
 }
 
 model DailyMaintenance {
-  id           String             @id @default(cuid())
-  date         DateTime           @default(now())
+  id           String                 @id @default(cuid())
+  date         DateTime               @default(now())
   dateOnly     DateTime // store only YYYY-MM-DD (waktu di-zerokan)
-  machine      Machine            @relation(fields: [machineId], references: [id])
+  machine      Machine                @relation(fields: [machineId], references: [id])
   machineId    String
-  student      User               @relation("StudentMaintenances", fields: [studentEmail], references: [email])
-  studentEmail String
-  approvedBy   User?              @relation("ApprovedByInstructor", fields: [approvedById], references: [id])
+  studentId    String
+  studentName  String
+  approvedBy   User?                  @relation("ApprovedByInstructor", fields: [approvedById], references: [id])
   approvedById String?
   approvedAt   DateTime?
   status       DailyMaintenanceStatus
@@ -105,7 +105,6 @@ model User {
   password            String
   name                String?
   role                Role               @default(student)
-  dailyMaintenances   DailyMaintenance[] @relation("StudentMaintenances")
   maintenanceApproved DailyMaintenance[] @relation("ApprovedByInstructor")
   statusLogs          MachineStatusLog[] @relation(fields: [], references: [])
   createdAt           DateTime           @default(now())
