@@ -365,6 +365,7 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
 };
 
 export const getMonthlySummaryOnUnit = async (req: Request, res: Response) => {
+  console.log("cek masuk getMonthlySummaryOnSection")
   try {
     const machines = await prisma.machine.findMany({
       select: { id: true, unit: true },
@@ -416,6 +417,7 @@ export const getMonthlySummaryOnUnit = async (req: Request, res: Response) => {
 }
 
 export const getMonthlySummaryOnSection = async (req: Request, res: Response) => {
+  console.log("cek masuk getMonthlySummaryOnSection")
   try {
     const machines = await prisma.machine.findMany({
       select: { id: true, section: true, unit: true  },

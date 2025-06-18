@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, monthlyMaintenances, summaryMaintenance, maintenanceByStudent} from "./routes/maintenanceRoutes";
+import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, maintenanceByStudent} from "./routes/maintenanceRoutes";
 import { Role, Prisma } from '@prisma/client';
 import {allMachines, machineById, machineByInventoryId, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
 import {loginRoute, usersByRole, protectedUserRouter, allInstructors} from "./routes/userRoutes";
@@ -65,8 +65,6 @@ app.get('/api/questionTemplate', allQuestion);
 app.get('/api/questionTemplate/:id', allQuestionById);
 
 app.get('/api/maintenance/', allDailyMaintenances); // GET /api/maintenances
-app.get('/api/maintenance/monthly', monthlyMaintenances); // GET /api/maintenances/monthly
-app.get('/api/maintenance/summary', summaryMaintenance); // GET /api/maintenances/summaryMonthly
 app.get('/api/maintenance/listing/by-student', authorizeRoles(Role.student), maintenanceByStudent); // GET /api/maintenances/student
 
 app.use("/api/maintenance", authorizeRoles(Role.admin, Role.instructor), protectedMaintenanceRouter);
