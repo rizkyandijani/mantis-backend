@@ -7,12 +7,14 @@ import {
   getUsersByRole,
   getAllUsers,
   loginUser,
-  getUserByUserId
+  getUserByUserId,
+  getInstructors
 } from "../controllers/user";
 
 
 export const loginRoute = loginUser
 export const usersByRole = getUsersByRole;
+export const allInstructors = getInstructors;
 
 const protectedUserRouter = Router();
 

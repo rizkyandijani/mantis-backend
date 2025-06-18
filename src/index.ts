@@ -3,7 +3,7 @@ import cors from "cors";
 import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, monthlyMaintenances, summaryMaintenance, maintenanceByStudent} from "./routes/maintenanceRoutes";
 import { Role, Prisma } from '@prisma/client';
 import {allMachines, machineById, machineByInventoryId, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
-import {loginRoute, usersByRole, protectedUserRouter} from "./routes/userRoutes";
+import {loginRoute, usersByRole, protectedUserRouter, allInstructors} from "./routes/userRoutes";
 import {allQuestion, allQuestionById, allQuestionByType, protectedQuestionRouter} from "./routes/questionRoutes";
 import {authenticateJWT, authorizeRoles} from "./middleware/auth";
 import {z} from "zod";
@@ -53,14 +53,16 @@ app.get('/api/fetch-proxy', async (req, res) => {
   }
 })
 
-app.post('/api/maintenance', postDailyMaintenance); // POST /api/maintenance
+app.post('/api/maintenance', postDailyMaintenance);
 app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
+app.get('/api/user/instructors', allInstructors);
+app.get('/api/machine', allMachines);
+app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
 
 app.use('/api', authenticateJWT);
 
 app.get('/api/questionTemplate', allQuestion);
 app.get('/api/questionTemplate/:id', allQuestionById);
-app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
 
 app.get('/api/maintenance/', allDailyMaintenances); // GET /api/maintenances
 app.get('/api/maintenance/monthly', monthlyMaintenances); // GET /api/maintenances/monthly
@@ -69,7 +71,6 @@ app.get('/api/maintenance/listing/by-student', authorizeRoles(Role.student), mai
 
 app.use("/api/maintenance", authorizeRoles(Role.admin, Role.instructor), protectedMaintenanceRouter);
 
-app.get('/api/machine', allMachines);
 app.get('/api/machine/byId/:machineId', machineById);
 app.get('/api/machine/byType/:machineType', machineByType);
 
@@ -85,26 +86,28 @@ app.get("/", (req, res) => {
 });
 
 app.use(function(err: {actualError: any, fallBackMessage: string, fallBackCode: number}, req: express.Request, res: express.Response, next: express.NextFunction): void {
-  console.log('cek err index', err)
-  logger.error(`[${req.method}] ${req.url} - ${err.actualError}`);
+  logger.error(`[${req.method}] ${req.url} - ${err.actualError} |||| Whole error object => ${err}`);
   
-  const error = err.actualError ?? err.fallBackMessage;
+  const error = err.actualError ?? err.fallBackMessage ?? err;
   const errorCode = err.fallBackCode ?? 500; // Default to 500 if not provided
   // Handle errors in a centralized way
 
     if(error instanceof z.ZodError){
-      console.log("cek masuk")
       res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      return;
     }
     if(error instanceof Prisma.PrismaClientKnownRequestError){
       res.status(Number(error.code) ?? 500).json({ error: (error.message ?? 'Failed to update machine status or log')});
+      return;
     }
     if(typeof error === "string"){
       res.status(500).json({ error: error });
+      return;
     }
 
     if (error instanceof CodeError) {
       res.status(error.code).json({ error: error.message });
+      return;
     }
 
   res.status(errorCode);

@@ -10,7 +10,9 @@ import {
   getDailyMaintenancesByStatus,
   getDailyMaintenancesDetail,
   approveOrRejectDailyMaintenance,
-  getMaintenanceByStudent
+  getMaintenanceByStudent,
+  getMonthlySummaryOnSection,
+  getMonthlySummaryOnUnit
 } from "../controllers/maintenance";
 import { withAuth } from "../services/withAuth";
 
@@ -27,7 +29,9 @@ protectedMaintenanceRouter.put("/:maintenanceId/updateStatus/", approveOrRejectD
 protectedMaintenanceRouter.get("/status/:status/approver/:approverId", getDailyMaintenancesByStatus);
 protectedMaintenanceRouter.get("/summary/machine/:machineId", getMonthlySummaryByMachine);
 protectedMaintenanceRouter.get("/summary/section/:section", getMonthlySummaryBySection);
-protectedMaintenanceRouter.get("/summary/unit/:unit", getMonthlySummaryByUnit);
+protectedMaintenanceRouter.get("/summary/sections", getMonthlySummaryOnSection);
+protectedMaintenanceRouter.get("/summary/units", getMonthlySummaryOnUnit);
+
 
 
 export {protectedMaintenanceRouter};

@@ -133,6 +133,19 @@ export const getUsersByRole = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Get all users with a instructor role
+ */
+export const getInstructors = async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({ omit: {password: true}, where: { role: Role.instructor } });
+    res.json(users);
+  } catch (error: any) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch instructors', fallBackCode: 500};
+    // res.status(500).json({ error: 'Failed to fetch users by role' });
+  }
+};
+
 export const getUserByUserId = async (req: Request, res: Response) => {
   const { userId } = req.params;
   try {

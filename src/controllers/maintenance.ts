@@ -363,3 +363,105 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
     // res.status(500).json({ error: 'Failed to fetch monthly summary' });
   }
 };
+
+export const getMonthlySummaryOnUnit = async (req: Request, res: Response) => {
+  try {
+    const machines = await prisma.machine.findMany({
+      select: { id: true, unit: true },
+    });
+
+    const unitGroups = new Map<string, string[]>(); // unit → machine IDs
+    for (const machine of machines) {
+      if (!unitGroups.has(machine.unit)) unitGroups.set(machine.unit, []);
+      unitGroups.get(machine.unit)?.push(machine.id);
+    }
+
+    const maintenances = await prisma.dailyMaintenance.findMany({
+      select: { machineId: true, dateOnly: true },
+    });
+
+    const totalWorkingDays = new Set(
+      maintenances.map((m) => m.dateOnly.toISOString().split("T")[0])
+    ).size;
+
+    const reportedByMachine = new Map<string, number>();
+    for (const m of maintenances) {
+      reportedByMachine.set(m.machineId, (reportedByMachine.get(m.machineId) || 0) + 1);
+    }
+
+    const result = Array.from(unitGroups.entries()).map(([unit, machineIds]) => {
+      const performances = machineIds.map((id) => {
+        const reported = reportedByMachine.get(id) || 0;
+        return reported / totalWorkingDays;
+      });
+
+      const avgPerformance =
+        performances.reduce((sum, p) => sum + p, 0) / performances.length || 0;
+
+      return {
+        unit,
+        machineCount: machineIds.length,
+        performance: (avgPerformance * 100).toFixed(2),
+      };
+    });
+
+    res.json({ data: result });
+  } catch (err) {
+    throw {
+      actualError: err,
+      fallBackMessage: "Failed to calculate accurate performance per unit",
+      fallBackCode: 500,
+    };
+  }
+}
+
+export const getMonthlySummaryOnSection = async (req: Request, res: Response) => {
+  try {
+    const machines = await prisma.machine.findMany({
+      select: { id: true, section: true, unit: true  },
+    });
+
+    const sectionGroups = new Map<string, string[]>(); // section → machine IDs
+    for (const machine of machines) {
+      if (!sectionGroups.has(machine.section)) sectionGroups.set(machine.section, []);
+      sectionGroups.get(machine.section)?.push(machine.id);
+    }
+
+    const maintenances = await prisma.dailyMaintenance.findMany({
+      select: { machineId: true, dateOnly: true },
+    });
+
+    const totalWorkingDays = new Set(
+      maintenances.map((m) => m.dateOnly.toISOString().split("T")[0])
+    ).size;
+
+    const reportedByMachine = new Map<string, number>();
+    for (const m of maintenances) {
+      reportedByMachine.set(m.machineId, (reportedByMachine.get(m.machineId) || 0) + 1);
+    }
+
+    const result = Array.from(sectionGroups.entries()).map(([section, machineIds]) => {
+      const performances = machineIds.map((id) => {
+        const reported = reportedByMachine.get(id) || 0;
+        return reported / totalWorkingDays;
+      });
+
+      const avgPerformance =
+        performances.reduce((sum, p) => sum + p, 0) / performances.length || 0;
+
+      return {
+        section,
+        machineCount: machineIds.length,
+        performance: (avgPerformance * 100).toFixed(2),
+      };
+    });
+
+    res.json({ data: result });
+  } catch (err) {
+    throw {
+      actualError: err,
+      fallBackMessage: "Failed to calculate accurate performance per section",
+      fallBackCode: 500,
+    };
+  }
+}
