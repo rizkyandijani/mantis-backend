@@ -354,7 +354,6 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
       totalWorkingDays: 22,
       percentage: `${((row.reportedDays / 22) * 100).toFixed(2)}%`
     }));
-    console.log("cek row summ", summary)
 
     res.json(summary);
   } catch (error) {
