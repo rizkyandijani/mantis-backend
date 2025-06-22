@@ -1,21 +1,25 @@
 import express from "express";
 import cors from "cors";
-import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, maintenanceByStudent} from "./routes/maintenanceRoutes";
+import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, maintenanceByStudent, postEvidence} from "./routes/maintenanceRoutes";
 import { Role, Prisma } from '@prisma/client';
-import {allMachines, machineById, machineByInventoryId, machineByType, protectedMachinerouter} from "./routes/machineRoutes";
+import {allMachines, machineById, machineByInventoryId, machineByType, machineQRData, protectedMachinerouter} from "./routes/machineRoutes";
 import {loginRoute, usersByRole, protectedUserRouter, allInstructors} from "./routes/userRoutes";
 import {allQuestion, allQuestionById, allQuestionByType, protectedQuestionRouter} from "./routes/questionRoutes";
 import {authenticateJWT, authorizeRoles} from "./middleware/auth";
 import {z} from "zod";
 import { CodeError } from "./libs/code_error";
 import { logger } from './utils/logger';
-import { extractAssetDetailsFromHTML } from "./utils/common";
+import multer from 'multer';
+import { getAllMachineType } from "./controllers/machine";
 
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() }); 
 
 app.use(cors());
 app.use(express.json());
+
+// Routes that can be accessed without token
 
 app.get('/api/auth/validate-token', authenticateJWT, (req, res) => {
   res.status(200).json({ valid: true });
@@ -23,48 +27,29 @@ app.get('/api/auth/validate-token', authenticateJWT, (req, res) => {
 
 app.use('/api/login', loginRoute);
 
-app.get('/api/fetch-proxy', async (req, res) => {
-  const targetUrl = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url; // Ensure targetUrl is a string
-  console.log("cek targetURL", targetUrl)
-  if (typeof targetUrl !== 'string') {
-     res.status(400).send('Invalid URL');
-  }
-  try {
-    if(targetUrl){
-      const response = await fetch(targetUrl as string);
-      console.log("cek response fetch proxy", response)
-      const text = await response.text(); // Use optional chaining
-      console.log("cek text fetch proxy =>>", text)
-      if(text){
-        const assetDetails = extractAssetDetailsFromHTML(text);
-        console.log("cek asset details", assetDetails);
-        // You can do something with assetDetails here if needed
-        res.status(200).json({data: assetDetails});
-      }
-      else{
-        console.log("No text found in response");
-        res.status(404).send('No content found');
-      }
-    }
-    res.status(500).send('Failed to fetch target page');
-  } catch (err) {
-    console.log("err fetch proxy", err)
-    res.status(500).send('Failed to fetch target page');
-  }
-})
+
 
 app.post('/api/maintenance', postDailyMaintenance);
-app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
-app.get('/api/user/instructors', allInstructors);
-app.get('/api/machine', allMachines);
-app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
 
+app.get('/api/user/instructors', allInstructors);
+
+app.get('/api/machine', allMachines);
+app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
+app.get('/api/fetch-proxy', machineQRData)
+app.get('/api/machine/allType', getAllMachineType);
+ 
+app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
+app.post('/api/evidence', upload.single('file'), postEvidence);
+
+// Route that need JWT
 app.use('/api', authenticateJWT);
 
 app.get('/api/questionTemplate', allQuestion);
 app.get('/api/questionTemplate/:id', allQuestionById);
 
 app.get('/api/maintenance/', allDailyMaintenances); // GET /api/maintenances
+
+// Route that needs roles authorization 
 app.get('/api/maintenance/listing/by-student', authorizeRoles(Role.student), maintenanceByStudent); // GET /api/maintenances/student
 
 app.use("/api/maintenance", authorizeRoles(Role.admin, Role.instructor), protectedMaintenanceRouter);

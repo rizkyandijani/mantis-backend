@@ -78,6 +78,7 @@ model QuestionResponse {
   questionId         String
   answer             Boolean
   question           QuestionTemplate @relation(fields: [questionId], references: [id])
+  evidenceUrl        String?
 }
 
 model MachineStatusLog {

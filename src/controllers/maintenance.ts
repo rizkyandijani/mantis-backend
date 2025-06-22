@@ -3,6 +3,10 @@ import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
 import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
 import { CodeError } from '../libs/code_error';
 import { AuthRequest } from '../middleware/auth';
+import { r2 } from "../libs/r2";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
+import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -41,7 +45,8 @@ export const createDailyMaintenance = async (req: Request, res: Response) => {
         responses: {
           create: responses.map(r => ({
             answer: r.answer,
-            questionId: r.questionId
+            questionId: r.questionId,
+            evidenceUrl: r.evidenceUrl
           }))
         }
       },
@@ -464,5 +469,37 @@ export const getMonthlySummaryOnSection = async (req: Request, res: Response) =>
       fallBackMessage: "Failed to calculate accurate performance per section",
       fallBackCode: 500,
     };
+  }
+}
+
+export const uploadEvidence = async (req: Request, res: Response) => {
+  const file = req.file;
+  const questionId = req.body.questionId;
+  console.log("cek file", file)
+  console.log("cek questionId", questionId)
+
+  if (!file || !questionId) {
+    res.status(400).json({ error: "Missing file or question response ID" });
+  }
+
+  const extension = path.extname(file.originalname);
+  const key = `evidence/${questionId}/${uuidv4()}${extension}`;
+
+  try {
+    await r2.send(
+      new PutObjectCommand({
+        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      })
+    );
+
+    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+
+    res.status(201).json({ url: publicUrl });
+  } catch (error) {
+    console.error("R2 Upload error:", error);
+    res.status(500).json({ error: "Failed to upload file to R2" });
   }
 }

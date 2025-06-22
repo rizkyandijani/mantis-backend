@@ -7,7 +7,9 @@ import {
   deleteMachine,
   getMachineByType,
   updateMachineStatusLogs,
-  getMachineByInventoryId
+  getMachineByInventoryId,
+  getMachineQRData,
+  getAllMachineType
 } from '../controllers/machine';
 import { withAuth } from '../services/withAuth';
 
@@ -17,6 +19,8 @@ export const allMachines = getAllMachines;
 export const machineById = getMachineById;
 export const machineByType = getMachineByType;
 export const machineByInventoryId = getMachineByInventoryId
+export const machineQRData = getMachineQRData;
+export const allMachineType = getAllMachineType;
 
 protectedMachinerouter.post('/', createMachine);             // POST /machines
 protectedMachinerouter.put('/:machineId', updateMachine);           // PUT /machines/:id

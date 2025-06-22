@@ -12,7 +12,8 @@ import {
   approveOrRejectDailyMaintenance,
   getMaintenanceByStudent,
   getMonthlySummaryOnSection,
-  getMonthlySummaryOnUnit
+  getMonthlySummaryOnUnit,
+  uploadEvidence,
 } from "../controllers/maintenance";
 import { withAuth } from "../services/withAuth";
 
@@ -23,6 +24,7 @@ export const allDailyMaintenances = getAllDailyMaintenances;
 export const monthlyMaintenances = getMonthlyMaintenances;
 export const summaryMaintenance = getMonthlySummary;
 export const maintenanceByStudent = withAuth(getMaintenanceByStudent);
+export const postEvidence = uploadEvidence;
 
 protectedMaintenanceRouter.get('/monthly', getMonthlyMaintenances); // GET /api/maintenances/monthly
 protectedMaintenanceRouter.get('/summary', getMonthlySummary); // GET /api/maintenances/summaryMonthly

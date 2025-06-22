@@ -1,11 +1,12 @@
 // controllers/machine.ts
-import { Request, Response } from 'express';
+import { Request, Response, response } from 'express';
 import { z } from 'zod';
 import { MachineStatus, PrismaClient, Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import {CodeError} from '../libs/code_error';
 import { updateMachineStatusLogSchema } from '../models/schema';
 import {logger} from "../utils/logger"
+import { extractAssetDetailsFromHTML } from '../utils/common';
 
 const prisma = new PrismaClient();
 
@@ -26,6 +27,22 @@ export const getMachineByType = async (req: Request, res: Response) => {
       orderBy: { id: 'asc' }
     });
     res.json(machine);
+  } catch (error) {
+    throw {actualError: error, fallBackMessage: 'Failed to fetch machine by type', fallBackCode: 500};
+  }
+};
+
+export const getAllMachineType = async (req: Request, res: Response) => {
+  try {
+    const machine = await prisma.machine.findMany({
+      distinct: ['machineCommonType'],
+      select: {
+        machineCommonType: true
+      },
+      orderBy: { id: 'asc' },
+    });
+    const typeArray = machine.map(m => m.machineCommonType);
+    res.json(typeArray);
   } catch (error) {
     throw {actualError: error, fallBackMessage: 'Failed to fetch machine by type', fallBackCode: 500};
   }
@@ -167,3 +184,33 @@ export const updateMachineStatusLogs = async (req: AuthRequest, res: Response) =
     throw {actualError: error, fallBackMessage: 'Failed to update machine status or log', fallBackCode: 500};
   }
 };
+
+export const getMachineQRData = async (req : Request, res: Response) => {
+  const targetUrl = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url; // Ensure targetUrl is a string
+  console.log("cek targetURL", targetUrl)
+  if (typeof targetUrl !== 'string') {
+     res.status(400).send('Invalid URL');
+  }
+  try {
+    if(targetUrl){
+      const response = await fetch(targetUrl as string);
+      console.log("cek response fetch proxy", response)
+      const text = await response.text(); // Use optional chaining
+      console.log("cek text fetch proxy =>>", text)
+      if(text){
+        const assetDetails = extractAssetDetailsFromHTML(text);
+        console.log("cek asset details", assetDetails);
+        // You can do something with assetDetails here if needed
+        res.status(200).json({data: assetDetails});
+      }
+      else{
+        console.log("No text found in response");
+        res.status(404).send('No content found');
+      }
+    }
+    res.status(500).send('Failed to fetch target page');
+  } catch (err) {
+    console.log("err fetch proxy", err)
+    res.status(500).send('Failed to fetch target page');
+  }
+}
