@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { postDailyMaintenance, protectedMaintenanceRouter, allDailyMaintenances, maintenanceByStudent, postEvidence} from "./routes/maintenanceRoutes";
 import { Role, Prisma } from '@prisma/client';
-import {allMachines, machineById, machineByInventoryId, machineByType, machineQRData, protectedMachinerouter} from "./routes/machineRoutes";
+import { allMachineType, allMachines, machineById, machineByInventoryId, machineByType, machineQRData, protectedMachinerouter} from "./routes/machineRoutes";
 import {loginRoute, usersByRole, protectedUserRouter, allInstructors} from "./routes/userRoutes";
 import {allQuestion, allQuestionById, allQuestionByType, protectedQuestionRouter} from "./routes/questionRoutes";
 import {authenticateJWT, authorizeRoles} from "./middleware/auth";
@@ -10,7 +10,6 @@ import {z} from "zod";
 import { CodeError } from "./libs/code_error";
 import { logger } from './utils/logger';
 import multer from 'multer';
-import { getAllMachineType } from "./controllers/machine";
 
 
 const app = express();
@@ -34,7 +33,7 @@ app.post('/api/maintenance', postDailyMaintenance);
 app.get('/api/user/instructors', allInstructors);
 
 app.get('/api/machine', allMachines);
-app.get('/api/machine/allType', getAllMachineType);
+app.get('/api/machineTypes', allMachineType);
 app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
 app.get('/api/fetch-proxy', machineQRData)
  
