@@ -34,9 +34,9 @@ app.post('/api/maintenance', postDailyMaintenance);
 app.get('/api/user/instructors', allInstructors);
 
 app.get('/api/machine', allMachines);
+app.get('/api/machine/allType', getAllMachineType);
 app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
 app.get('/api/fetch-proxy', machineQRData)
-app.get('/api/machine/allType', getAllMachineType);
  
 app.get('/api/questionTemplate/byType/:machineType', allQuestionByType);
 app.post('/api/evidence', upload.single('file'), postEvidence);

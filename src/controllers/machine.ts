@@ -33,6 +33,7 @@ export const getMachineByType = async (req: Request, res: Response) => {
 };
 
 export const getAllMachineType = async (req: Request, res: Response) => {
+  console.log("cek machine all type")
   try {
     const machine = await prisma.machine.findMany({
       distinct: ['machineCommonType'],
