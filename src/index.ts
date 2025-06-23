@@ -33,7 +33,7 @@ app.post('/api/maintenance', postDailyMaintenance);
 app.get('/api/user/instructors', allInstructors);
 
 app.get('/api/machine', allMachines);
-app.get('/api/machineTypes', allMachineType);
+app.get('/api/machine/allTypes', allMachineType);
 app.get('/api/machine/byInventoryId/:inventoryId', machineByInventoryId);
 app.get('/api/fetch-proxy', machineQRData)
  
