@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
-import { startOfMonth, endOfMonth, startOfDay } from 'date-fns';
+import { differenceInDays, format, startOfDay } from 'date-fns';
 import { CodeError } from '../libs/code_error';
 import { AuthRequest } from '../middleware/auth';
 import { r2 } from "../libs/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
+import { machine } from 'os';
 
 const prisma = new PrismaClient();
 
@@ -307,22 +308,24 @@ export const getQuestionTemplate = async (req: Request, res: Response) => {
 };
 
 export const getMonthlySummary = async (req: Request, res: Response) => {
-  const { year, month } = req.query;
+  const { from, to } = req.query;
 
   
-  const from = year && month ? startOfMonth(new Date(Number(year), Number(month) - 1)) : new Date(0); // Start from epoch if year/month not provided
-  const to = year && month ? endOfMonth(from) : new Date(); // End at current date if year/month not provided
+  const fromVal = from ? new Date(from as string) : new Date(0); // Start from epoch if year/month not provided
+  const toVal = to ? new Date(to as string) : new Date(); // End at current date if year/month not provided
   
-  if (year && month && (!year || !month)) {
-    throw new CodeError('Missing year or month', 400)
+  if (from && to && (!from || !to)) {
+    throw new CodeError('Missing from or to value', 400)
   }
+
+  const useDaily = differenceInDays(toVal, fromVal) < 90;
 
   try {
     const maintenances = await prisma.dailyMaintenance.findMany({
       where: {
         date: {
-          gte: from,
-          lte: to
+          gte: fromVal,
+          lte: toVal
         }
       },
       include: {
@@ -333,11 +336,21 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
     const machineMap = new Map<string, any>();
     maintenances.forEach((m) => {
       const id = m.machineId;
+      const dateKey = useDaily
+      ? format(m.date, "yyyy-MM-dd") // e.g. 2025-07-03
+      : `${m.date.getFullYear()}-${m.date.getMonth() + 1}`; // e.g. 2025-7
+
       const key = `${id}-${m.date.getFullYear()}-${m.date.getMonth() + 1}`;
       if (!machineMap.has(key)) {
         machineMap.set(key, {
-          month: `${m.date.toLocaleString('default', { month: 'long' })}`,
-          year: `${m.date.getFullYear()}`,
+          dataLabel: useDaily
+          ? format(m.date, "dd MMM yyyy")
+          : `${m.date.toLocaleString("default", {
+              month: "long",
+            })} ${m.date.getFullYear()}`,
+          dateKey: dateKey,
+          // month: `${m.date.toLocaleString('default', { month: 'long' })}`,
+          // year: `${m.date.getFullYear()}`,
           section: m.machine.section,
           unit: m.machine.unit,
           machineCommonType: m.machine.machineCommonType,
@@ -346,18 +359,21 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
           machineName: m.machine.name,
           machineStatus: m.machine.status,
           reportedDays: 1,
-          totalWorkingDays: 0 // placeholder
+          // totalWorkingDays: 0 // placeholder
+          totalWorkingDays: useDaily ? 1 : 22, // 1 day for daily, 22 fixed for monthly
         });
       } else {
-        machineMap.get(key).reportedDays++;
+        const row = machineMap.get(key)
+        row.reportedDays++;
+        if (useDaily) row.totalWorkingDays++;
       }
     });
 
     // Assume max 22 workdays per month for simplicity
     const summary = Array.from(machineMap.values()).map((row) => ({
       ...row,
-      totalWorkingDays: 22,
-      percentage: `${((row.reportedDays / 22) * 100).toFixed(2)}%`
+      // totalWorkingDays: 22,
+      percentage: `${((row.reportedDays / row.totalWorkingDays) * 100).toFixed(2)}%`
     }));
 
     res.json(summary);
@@ -503,3 +519,48 @@ export const uploadEvidence = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to upload file to R2" });
   }
 }
+
+export const getUnitMonthlySummary = async (req: Request, res: Response) => {
+  // const year = Number(req.query.year);
+  // const month = Number(req.query.month);
+  // if (!year || !month) throw new CodeError("Missing year or month", 400);
+
+  // const from = new Date(year, month - 1, 1);
+  // const to = new Date(year, month, 0);
+  const currentDate = new Date();
+  const firstDateOfYear = new Date(currentDate.getFullYear(), 0, 1);
+  const lastDateOfYear = new Date(currentDate.getFullYear(), 11, 31);
+
+  const machines = await prisma.machine.findMany({ select: { id: true, unit: true } });
+
+  const unitGroups = new Map<string, string[]>();
+  machines.forEach((m) => {
+    if (!unitGroups.has(m.unit)) unitGroups.set(m.unit, []);
+    unitGroups.get(m.unit)?.push(m.id);
+  });
+
+  const maintenances = await prisma.dailyMaintenance.findMany({
+    where: { date: { gte: firstDateOfYear, lte: lastDateOfYear } },
+    select: { machineId: true, dateOnly: true },
+  });
+
+  const reportedByMachine = new Map<string, number>();
+  maintenances.forEach((m) => {
+    reportedByMachine.set(m.machineId, (reportedByMachine.get(m.machineId) || 0) + 1);
+  });
+
+  const totalWorkdays = new Set(maintenances.map((m) => m.dateOnly.toISOString().split("T")[0])).size || 22;
+
+  const result = Array.from(unitGroups.entries()).map(([unit, ids]) => {
+    const avg =
+      ids.reduce((acc, id) => acc + (reportedByMachine.get(id) || 0) / totalWorkdays, 0) / ids.length;
+
+    return {
+      unit,
+      machineCount: ids.length,
+      performance: Number((avg * 100).toFixed(2)), // %
+    };
+  });
+
+  res.json({data: result});
+};
