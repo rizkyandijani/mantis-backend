@@ -636,3 +636,73 @@ export const getSectionUnitPerformance = async (req: Request, res: Response) => 
     res.status(500).json({ error: 'Failed to calculate section-unit performance' });
   }
 };
+
+// Helper: get all months (YYYY-MM) from maintenance records
+function getAllMonths(maintenances: { dateOnly: Date }[]): string[] {
+  const months = new Set<string>();
+  for (const m of maintenances) {
+    const d = new Date(m.dateOnly);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    months.add(ym);
+  }
+  return Array.from(months).sort().reverse(); // latest first
+}
+
+export const getAllMonthsSectionUnitPerformance = async (req: Request, res: Response) => {
+  try {
+    // Get all machines with section and unit
+    const machines = await prisma.machine.findMany({
+      select: { id: true, section: true, unit: true },
+    });
+    // Group machines by section+unit
+    const sectionUnitGroups = new Map<string, { section: string; unit: string; machineIds: string[] }>();
+    for (const machine of machines) {
+      const key = `${machine.section}|||${machine.unit}`;
+      if (!sectionUnitGroups.has(key)) {
+        sectionUnitGroups.set(key, { section: machine.section, unit: machine.unit, machineIds: [] });
+      }
+      sectionUnitGroups.get(key)!.machineIds.push(machine.id);
+    }
+    // Get all daily maintenance records
+    const maintenances = await prisma.dailyMaintenance.findMany({
+      select: { machineId: true, dateOnly: true },
+    });
+    // Get all months present in the data
+    const months = getAllMonths(maintenances);
+    // For each month, calculate working days and performance
+    const result = months.map((ym) => {
+      const [year, month] = ym.split('-').map(Number);
+      const firstDay = new Date(year, month - 1, 1);
+      const lastDay = new Date(year, month, 0);
+      const workingDays = countWorkingDays(firstDay, lastDay);
+      // Count reported days per machine for this month
+      const reportedByMachine = new Map<string, number>();
+      for (const m of maintenances) {
+        const d = new Date(m.dateOnly);
+        if (d >= firstDay && d <= lastDay) {
+          reportedByMachine.set(m.machineId, (reportedByMachine.get(m.machineId) || 0) + 1);
+        }
+      }
+      // Calculate performance for each section-unit
+      const data = Array.from(sectionUnitGroups.values()).map(({ section, unit, machineIds }) => {
+        const totalMachines = machineIds.length;
+        let totalReportedDays = 0;
+        for (const id of machineIds) {
+          totalReportedDays += reportedByMachine.get(id) || 0;
+        }
+        const denominator = totalMachines * workingDays;
+        const performance = denominator > 0 ? (totalReportedDays / denominator) * 100 : 0;
+        return {
+          section,
+          unit,
+          performance: Number(performance.toFixed(2)),
+        };
+      });
+      return { month: ym, data };
+    });
+    res.json({ data: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to calculate all months section-unit performance' });
+  }
+};
