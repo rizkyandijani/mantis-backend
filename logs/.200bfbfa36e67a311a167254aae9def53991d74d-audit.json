@@ -6,14 +6,29 @@
     "auditLog": "logs/.200bfbfa36e67a311a167254aae9def53991d74d-audit.json",
     "files": [
         {
-            "date": 1749916837890,
-            "name": "logs/mantis-error-2025-06-14.log",
-            "hash": "1e1798f7550b3c62b964fbe28225e27fa473e2f0ce42b20eda05bd0f9a25b110"
+            "date": 1750266223885,
+            "name": "logs/mantis-error-2025-06-19.log",
+            "hash": "ad75855702c740c75e97fc18bdc5615227907103976714f0017fe5785793aeca"
         },
         {
-            "date": 1749921011234,
-            "name": "logs/mantis-error-2025-06-15.log",
-            "hash": "789f3f7cb25262062950f888bc769d129bdb1338f2292f37a00e8b5a703e10c6"
+            "date": 1750591499906,
+            "name": "logs/mantis-error-2025-06-22.log",
+            "hash": "e0ed392ed4cbe3be2f5f2a125e91a36338db35ff350ec3d413cd65e913d0d8f0"
+        },
+        {
+            "date": 1750644771205,
+            "name": "logs/mantis-error-2025-06-23.log",
+            "hash": "82b8cf123919d615309ed7565cd7d09087814a2fc388783c7c797515dce70913"
+        },
+        {
+            "date": 1750748810598,
+            "name": "logs/mantis-error-2025-06-24.log",
+            "hash": "f4db667e053531d4f207b42b75abda08d2c7aa4f3194e4e4221a85035c1c3ab5"
+        },
+        {
+            "date": 1751467445390,
+            "name": "logs/mantis-error-2025-07-02.log",
+            "hash": "06800ab7bfd6cc930cdc5a195fb4d0df5e6001198b6020cc8a4b4c300d6c20ec"
         }
     ],
     "hashType": "sha256"

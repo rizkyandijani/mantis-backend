@@ -15,6 +15,7 @@ import {
   getMonthlySummaryOnUnit,
   uploadEvidence,
   getUnitMonthlySummary,
+  getSectionUnitPerformance,
 } from "../controllers/maintenance";
 import { withAuth } from "../services/withAuth";
 
@@ -32,6 +33,7 @@ protectedMaintenanceRouter.get('/summary', getMonthlySummary); // GET /api/maint
 protectedMaintenanceRouter.get("/sectionSums", getMonthlySummaryOnSection);
 protectedMaintenanceRouter.get("/unitSums", getMonthlySummaryOnUnit);
 protectedMaintenanceRouter.get("/unitSums2", getUnitMonthlySummary);
+protectedMaintenanceRouter.get("/sectionUnitPerformance", getSectionUnitPerformance);
 
 protectedMaintenanceRouter.get("/:maintenanceId", getDailyMaintenancesDetail);
 protectedMaintenanceRouter.put("/:maintenanceId/updateStatus/", approveOrRejectDailyMaintenance);
