@@ -320,23 +320,15 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
   const useDaily = differenceInDays(toVal, fromVal) < 90;
 
   try {
-    const maintenances = await prisma.dailyMaintenance.findMany({
-      where: {
-        date: {
-          gte: fromVal,
-          lte: toVal
-        }
-      },
-      include: {
-        machine: true
-      }
-    });
-
-    // Get all unique section|unit combinations
-    const allKeys = new Set<string>();
-    maintenances.forEach((m) => {
-      allKeys.add(`${m.machine.section}|${m.machine.unit}`);
-    });
+    // Get all machines and all section-unit combos
+    const machines = await prisma.machine.findMany({ select: { id: true, section: true, unit: true } });
+    const allKeys = Array.from(new Set(machines.map(m => `${m.section}|${m.unit}`)));
+    const sectionUnitToMachines: Record<string, string[]> = {};
+    for (const m of machines) {
+      const key = `${m.section}|${m.unit}`;
+      if (!sectionUnitToMachines[key]) sectionUnitToMachines[key] = [];
+      sectionUnitToMachines[key].push(m.id);
+    }
 
     // Generate all x-axis points
     let allLabels: string[] = [];
@@ -351,11 +343,11 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
         d = addDays(d, 1);
       }
     } else {
-      // All months in range
+      // All months in range (always 12 for a year)
       let y = fromVal.getFullYear();
-      let m = fromVal.getMonth();
+      let m = 0;
       const endY = toVal.getFullYear();
-      const endM = toVal.getMonth();
+      const endM = 11;
       while (y < endY || (y === endY && m <= endM)) {
         allLabels.push(`${new Date(y, m, 1).toLocaleString("default", { month: "long" })} ${y}`);
         m++;
@@ -363,41 +355,60 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
       }
     }
 
-    // Build a map: { [label]: { [section|unit]: {reportedDays, totalWorkingDays, ...} } }
-    const dataMap: Record<string, Record<string, any>> = {};
+    // Get all daily maintenance records in range
+    const maintenances = await prisma.dailyMaintenance.findMany({
+      where: {
+        date: {
+          gte: fromVal,
+          lte: toVal
+        }
+      },
+      include: { machine: true }
+    });
+
+    // Build a map: { [label]: { [section|unit]: Set of machineId with maintenance on that date/month } }
+    const dataMap: Record<string, Record<string, Set<string>>> = {};
     for (const label of allLabels) {
       dataMap[label] = {};
       for (const key of allKeys) {
-        dataMap[label][key] = {
-          reportedDays: 0,
-          totalWorkingDays: useDaily ? 1 : 22, // 1 for daily, 22 for monthly
-        };
+        dataMap[label][key] = new Set();
       }
     }
-    // Fill in actual data
     maintenances.forEach((m) => {
       const key = `${m.machine.section}|${m.machine.unit}`;
       const label = useDaily
         ? format(m.date, "dd MMM yyyy")
         : `${m.date.toLocaleString("default", { month: "long" })} ${m.date.getFullYear()}`;
       if (dataMap[label] && dataMap[label][key]) {
-        dataMap[label][key].reportedDays++;
+        dataMap[label][key].add(m.machineId);
       }
     });
+
+    // Calculate denominator
+    const denominator = (label: string, key: string) => {
+      if (useDaily) {
+        // For daily, denominator is number of machines in section-unit
+        return sectionUnitToMachines[key]?.length || 1;
+      } else {
+        // For monthly, denominator is number of machines in section-unit × working days (22)
+        return (sectionUnitToMachines[key]?.length || 1) * 22;
+      }
+    };
 
     // Flatten to array of PerformanceData
     const summary: any[] = [];
     for (const label of allLabels) {
       for (const key of allKeys) {
         const [section, unit] = key.split("|");
-        const { reportedDays, totalWorkingDays } = dataMap[label][key];
+        const reportedDays = dataMap[label][key].size;
+        const denom = denominator(label, key);
         summary.push({
           dataLabel: label,
           section,
           unit,
           reportedDays,
-          totalWorkingDays,
-          percentage: `${((reportedDays / totalWorkingDays) * 100).toFixed(2)}%`,
+          totalWorkingDays: useDaily ? 1 : 22,
+          percentage: `${((reportedDays / denom) * 100).toFixed(2)}%`,
           machineName: "",
           machineStatus: "",
         });
