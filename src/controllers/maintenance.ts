@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient, DailyMaintenanceStatus } from '@prisma/client';
-import { differenceInDays, format, startOfDay } from 'date-fns';
+import { differenceInDays, format, startOfDay, addDays, isBefore } from 'date-fns';
 import { CodeError } from '../libs/code_error';
 import { AuthRequest } from '../middleware/auth';
 import { r2 } from "../libs/r2";
@@ -310,10 +310,9 @@ export const getQuestionTemplate = async (req: Request, res: Response) => {
 export const getMonthlySummary = async (req: Request, res: Response) => {
   const { from, to } = req.query;
 
-  
   const fromVal = from ? new Date(from as string) : new Date(0); // Start from epoch if year/month not provided
   const toVal = to ? new Date(to as string) : new Date(); // End at current date if year/month not provided
-  
+
   if (from && to && (!from || !to)) {
     throw new CodeError('Missing from or to value', 400)
   }
@@ -333,48 +332,77 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
       }
     });
 
-    const machineMap = new Map<string, any>();
+    // Get all unique section|unit combinations
+    const allKeys = new Set<string>();
     maintenances.forEach((m) => {
-      const id = m.machineId;
-      const dateKey = useDaily
-      ? format(m.date, "yyyy-MM-dd") // e.g. 2025-07-03
-      : `${m.date.getFullYear()}-${m.date.getMonth() + 1}`; // e.g. 2025-7
+      allKeys.add(`${m.machine.section}|${m.machine.unit}`);
+    });
 
-      const key = `${id}-${m.date.getFullYear()}-${m.date.getMonth() + 1}`;
-      if (!machineMap.has(key)) {
-        machineMap.set(key, {
-          dataLabel: useDaily
-          ? format(m.date, "dd MMM yyyy")
-          : `${m.date.toLocaleString("default", {
-              month: "long",
-            })} ${m.date.getFullYear()}`,
-          dateKey: dateKey,
-          // month: `${m.date.toLocaleString('default', { month: 'long' })}`,
-          // year: `${m.date.getFullYear()}`,
-          section: m.machine.section,
-          unit: m.machine.unit,
-          machineCommonType: m.machine.machineCommonType,
-          machineSpecificType: m.machine.machineSpecificType,
-          machineGroup: m.machine.machineGroup,
-          machineName: m.machine.name,
-          machineStatus: m.machine.status,
-          reportedDays: 1,
-          // totalWorkingDays: 0 // placeholder
-          totalWorkingDays: useDaily ? 1 : 22, // 1 day for daily, 22 fixed for monthly
-        });
-      } else {
-        const row = machineMap.get(key)
-        row.reportedDays++;
-        if (useDaily) row.totalWorkingDays++;
+    // Generate all x-axis points
+    let allLabels: string[] = [];
+    if (useDaily) {
+      // All Mon-Fri in range
+      let d = new Date(fromVal);
+      while (d <= toVal) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) {
+          allLabels.push(format(d, "dd MMM yyyy"));
+        }
+        d = addDays(d, 1);
+      }
+    } else {
+      // All months in range
+      let y = fromVal.getFullYear();
+      let m = fromVal.getMonth();
+      const endY = toVal.getFullYear();
+      const endM = toVal.getMonth();
+      while (y < endY || (y === endY && m <= endM)) {
+        allLabels.push(`${new Date(y, m, 1).toLocaleString("default", { month: "long" })} ${y}`);
+        m++;
+        if (m > 11) { m = 0; y++; }
+      }
+    }
+
+    // Build a map: { [label]: { [section|unit]: {reportedDays, totalWorkingDays, ...} } }
+    const dataMap: Record<string, Record<string, any>> = {};
+    for (const label of allLabels) {
+      dataMap[label] = {};
+      for (const key of allKeys) {
+        dataMap[label][key] = {
+          reportedDays: 0,
+          totalWorkingDays: useDaily ? 1 : 22, // 1 for daily, 22 for monthly
+        };
+      }
+    }
+    // Fill in actual data
+    maintenances.forEach((m) => {
+      const key = `${m.machine.section}|${m.machine.unit}`;
+      const label = useDaily
+        ? format(m.date, "dd MMM yyyy")
+        : `${m.date.toLocaleString("default", { month: "long" })} ${m.date.getFullYear()}`;
+      if (dataMap[label] && dataMap[label][key]) {
+        dataMap[label][key].reportedDays++;
       }
     });
 
-    // Assume max 22 workdays per month for simplicity
-    const summary = Array.from(machineMap.values()).map((row) => ({
-      ...row,
-      // totalWorkingDays: 22,
-      percentage: `${((row.reportedDays / row.totalWorkingDays) * 100).toFixed(2)}%`
-    }));
+    // Flatten to array of PerformanceData
+    const summary: any[] = [];
+    for (const label of allLabels) {
+      for (const key of allKeys) {
+        const [section, unit] = key.split("|");
+        const { reportedDays, totalWorkingDays } = dataMap[label][key];
+        summary.push({
+          dataLabel: label,
+          section,
+          unit,
+          reportedDays,
+          totalWorkingDays,
+          percentage: `${((reportedDays / totalWorkingDays) * 100).toFixed(2)}%`,
+          machineName: "",
+          machineStatus: "",
+        });
+      }
+    }
 
     res.json(summary);
   } catch (error) {
@@ -583,7 +611,6 @@ export const getSectionUnitPerformance = async (req: Request, res: Response) => 
     const machines = await prisma.machine.findMany({
       select: { id: true, section: true, unit: true },
     });
-
     // Group machines by section+unit
     const sectionUnitGroups = new Map<string, { section: string; unit: string; machineIds: string[] }>();
     for (const machine of machines) {
@@ -593,19 +620,16 @@ export const getSectionUnitPerformance = async (req: Request, res: Response) => 
       }
       sectionUnitGroups.get(key)!.machineIds.push(machine.id);
     }
-
     // Get all daily maintenance records
     const maintenances = await prisma.dailyMaintenance.findMany({
       select: { machineId: true, dateOnly: true },
     });
-
-    // Calculate working days in the current month
+    // Use 22 as working days for every month
+    const workingDays = 22;
+    // Count reported days per machine (only for current month)
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const workingDays = countWorkingDays(firstDay, lastDay);
-
-    // Count reported days per machine (only for current month)
     const reportedByMachine = new Map<string, number>();
     for (const m of maintenances) {
       const d = new Date(m.dateOnly);
@@ -613,7 +637,6 @@ export const getSectionUnitPerformance = async (req: Request, res: Response) => 
         reportedByMachine.set(m.machineId, (reportedByMachine.get(m.machineId) || 0) + 1);
       }
     }
-
     // Calculate performance for each section-unit
     const result = Array.from(sectionUnitGroups.values()).map(({ section, unit, machineIds }) => {
       const totalMachines = machineIds.length;
@@ -629,7 +652,6 @@ export const getSectionUnitPerformance = async (req: Request, res: Response) => 
         performance: Number(performance.toFixed(2)),
       };
     });
-
     res.json({ data: result });
   } catch (err) {
     console.error(err);
@@ -669,12 +691,13 @@ export const getAllMonthsSectionUnitPerformance = async (req: Request, res: Resp
     });
     // Get all months present in the data
     const months = getAllMonths(maintenances);
-    // For each month, calculate working days and performance
+    // Use 22 as working days for every month
+    const workingDays = 22;
+    // For each month, calculate performance
     const result = months.map((ym) => {
       const [year, month] = ym.split('-').map(Number);
       const firstDay = new Date(year, month - 1, 1);
       const lastDay = new Date(year, month, 0);
-      const workingDays = countWorkingDays(firstDay, lastDay);
       // Count reported days per machine for this month
       const reportedByMachine = new Map<string, number>();
       for (const m of maintenances) {
