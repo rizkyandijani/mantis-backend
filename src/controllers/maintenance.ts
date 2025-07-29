@@ -801,6 +801,8 @@ export const getYearlyRecap = async (req: Request, res: Response) => {
         studentSubmitted: record.responses.some(r => r.questionId === question.id && r.answer),
         instructorApproved: record.status === 'APPROVED',
       })),
+      approvalNote: record.approvalNote || null,
+      status: record.status
     }));
 
     // Return the formatted data
