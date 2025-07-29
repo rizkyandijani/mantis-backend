@@ -740,3 +740,78 @@ export const getAllMonthsSectionUnitPerformance = async (req: Request, res: Resp
     res.status(500).json({ error: 'Failed to calculate all months section-unit performance' });
   }
 };
+
+// Yearly Recap for PDF Export
+export const getYearlyRecap = async (req: Request, res: Response) => {
+  const { machineId, year } = req.query;
+  const yearNum = parseInt(year as string);
+
+  if (!machineId || !year || isNaN(yearNum)) {
+    return res.status(400).json({ error: 'Invalid machineId or year' });
+  }
+
+  try {
+    // Get machine info
+    const machine = await prisma.machine.findUnique({
+      where: { id: machineId as string },
+    });
+
+    if (!machine) {
+      return res.status(404).json({ error: 'Machine not found' });
+    }
+
+    // Get checklist questions for this machine type
+    const questions = await prisma.questionTemplate.findMany({
+      where: { 
+        machineCommonType: machine.machineCommonType,
+        isActive: true 
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    if (questions.length === 0) {
+      return res.status(404).json({ error: 'No questions found for this machine type' });
+    }
+
+    // Get all maintenance records for this machine in the specified year
+    const yearStart = new Date(yearNum, 0, 1); // January 1st of the year
+    const yearEnd = new Date(yearNum, 11, 31); // December 31st of the year
+
+    const maintenanceRecords = await prisma.dailyMaintenance.findMany({
+      where: {
+        machineId: machineId as string,
+        dateOnly: {
+          gte: yearStart,
+          lte: yearEnd,
+        },
+      },
+      include: {
+        responses: true,
+      },
+      orderBy: {
+        dateOnly: 'asc',
+      },
+    });
+
+    // Transform the data into the required format
+    const maintenanceData = maintenanceRecords.map(record => ({
+      date: record.dateOnly.toISOString(),
+      checklistItems: questions.map(question => ({
+        questionId: question.id,
+        studentSubmitted: record.responses.some(r => r.questionId === question.id && r.answer),
+        instructorApproved: record.status === 'APPROVED',
+      })),
+    }));
+
+    // Return the formatted data
+    res.json({
+      machine,
+      checklistQuestions: questions.map(q => q.question),
+      maintenanceData,
+    });
+
+  } catch (error) {
+    console.error('Error in getYearlyRecap:', error);
+    res.status(500).json({ error: 'Failed to fetch yearly recap data' });
+  }
+};
